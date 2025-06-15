@@ -18,19 +18,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Manejar archivos seleccionados desde el input
-    fileInput.addEventListener('change', () => {
-        handleFiles(fileInput.files);
-        fileInput.value = ''; // Reset file input to allow selecting the same file again if removed
+    fileInput.addEventListener('change', async () => { // Make async
+        if (fileInput.files.length > 0) {
+            await handleFiles(fileInput.files); // Await file handling
+            fileInput.value = ''; // Reset file input
+        }
     });
 
     // Cargar datasets por defecto
     loadDefaultBtn.addEventListener('click', async () => {
         try {
-            const defaultFiles = await pywebview.api.load_default_datasets();
-            if (defaultFiles && defaultFiles.length > 0) {
-                // Avoid adding duplicates if already loaded
-                const newDefaultFiles = defaultFiles
-                    .map(fileName => ({ name: fileName, path: null, type: 'default' }))
+            const defaultFileNames = await pywebview.api.load_default_datasets();
+            if (defaultFileNames && defaultFileNames.length > 0) {
+                const newDefaultFiles = defaultFileNames
+                    .map(fileName => ({ name: fileName, content: null, type: 'default' })) // content is null for default
                     .filter(df => !loadedFiles.some(lf => lf.type === 'default' && lf.name === df.name));
                 
                 loadedFiles = loadedFiles.concat(newDefaultFiles);
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Failed to load default datasets.');
         }
     });
-
+    
     // Iniciar procesamiento de archivos
     processBtn.addEventListener('click', async () => {
         if (loadedFiles.length === 0) return;
@@ -53,12 +54,35 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             // Llama a la API de Python para que procese los archivos
-            const response = await window.webview.api.process_files(loadedFiles);
-            console.log(response.message);
-            // Aquí podrías mostrar un mensaje de éxito y navegar a la siguiente pantalla (dashboard)
-            // window.location.href = 'dashboard.html';
+            // Corrected from window.webview.api to pywebview.api
+            const response = await pywebview.api.process_files(loadedFiles); 
+            
+            // Handle the response from Python
+            if (response) {
+                console.log('Processing response:', response); // Log the full response
+                alert(response.message); // Show the message from the Python backend
+
+                if (response.status === "success" || response.status === "partial_success") {
+                    // Optionally, clear the file list or navigate
+                    // loadedFiles = []; // Clear list after successful processing
+                    // updateFileListUI();
+                    // console.log("Files processed, navigating to dashboard (if implemented).");
+                    // window.location.href = 'dashboard.html'; // If you have a dashboard page
+                } else if (response.status === "error") {
+                    console.error('Error reported from Python API:', response.message);
+                    if (response.failures && response.failures.length > 0) {
+                        console.error('Failed files:', response.failures);
+                        // You could display these specific failures to the user
+                    }
+                }
+            } else {
+                console.error('No response received from process_files API call.');
+                alert('An unexpected error occurred: No response from server.');
+            }
+
         } catch (error) {
-            console.error('Error processing files:', error);
+            console.error('Error calling process_files API:', error);
+            alert(`An error occurred while processing files: ${error.message || error}`);
         } finally {
             // Reactiva el botón
             processBtn.disabled = false;
@@ -68,8 +92,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- LÓGICA DE DRAG & DROP ---
 
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
+    dropZone.addEventListener('dragover', (event) => {
+        event.preventDefault();
         dropZone.classList.add('dragover');
     });
 
@@ -77,59 +101,58 @@ document.addEventListener('DOMContentLoaded', () => {
         dropZone.classList.remove('dragover');
     });
 
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
+    dropZone.addEventListener('drop', async (event) => { // Make async
+        event.preventDefault();
         dropZone.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        handleFiles(files);
+        if (event.dataTransfer.files.length > 0) {
+            await handleFiles(event.dataTransfer.files); // Await file handling
+        }
     });
+
 
     // --- FUNCIONES AUXILIARES ---
 
-    function handleFiles(files) {
-        console.log('--- handleFiles called ---');
-        console.log('Initial loadedFiles:', JSON.parse(JSON.stringify(loadedFiles)));
-
-        const newFiles = Array.from(files).map(file => {
-            console.log('Processing file:', file.name, 'path:', file.path); // file.path might be undefined
-            return { name: file.name, path: file.path, type: 'uploaded' };
+    // Function to read a single file's content
+    function readFileAsText(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => reject(reader.error);
+            reader.readAsText(file); // Assuming CSVs are text files
         });
-        console.log('New files mapped:', JSON.parse(JSON.stringify(newFiles)));
+    }
 
-        const uniqueNewFiles = newFiles.filter(nf => {
-            return !loadedFiles.some(lf => {
-                // Check for duplicates
-                if (lf.type === 'uploaded' && nf.type === 'uploaded') {
-                    // If paths are available and match, it's a duplicate
-                    if (nf.path && lf.path && nf.path === lf.path) {
-                        // console.log(`Duplicate based on path: new ${nf.name} (${nf.path}) vs loaded ${lf.name} (${lf.path})`);
-                        return true;
-                    }
-                    // If paths are undefined for both, check by name
-                    if (nf.path === undefined && lf.path === undefined && nf.name === lf.name) {
-                        // console.log(`Duplicate based on name (undefined paths): new ${nf.name} vs loaded ${lf.name}`);
-                        return true;
-                    }
-                    // If one path is defined and the other isn't, they are different files for this check,
-                    // unless we want to be stricter and say if a named file is already there, don't add.
-                    // For now, this logic prioritizes path if available, otherwise name if paths are consistently undefined.
-                }
-                return false; // Not a duplicate based on this logic
-            });
-        });
-        console.log('Unique new files to add:', JSON.parse(JSON.stringify(uniqueNewFiles)));
-
-        loadedFiles = loadedFiles.concat(uniqueNewFiles);
-        console.log('Updated loadedFiles:', JSON.parse(JSON.stringify(loadedFiles)));
+    async function handleFiles(files) { // Make async
+        console.log('--- handleFiles called (content reading mode) ---');
         
+        const newFileObjectsPromises = Array.from(files).map(async (file) => {
+            try {
+                const content = await readFileAsText(file);
+                console.log(`Read content for: ${file.name} (size: ${content.length})`);
+                return { name: file.name, content: content, type: 'uploaded' };
+            } catch (error) {
+                console.error(`Error reading file ${file.name}:`, error);
+                alert(`Could not read file: ${file.name}`);
+                return null; // Or handle error appropriately
+            }
+        });
+
+        const newFileObjects = (await Promise.all(newFileObjectsPromises)).filter(f => f !== null);
+
+        // Filter out already added files based on name for uploaded files
+        // (since content comparison would be too heavy and path is not used)
+        const uniqueNewFiles = newFileObjects.filter(nf => 
+            !loadedFiles.some(lf => lf.type === 'uploaded' && lf.name === nf.name)
+        );
+        
+        loadedFiles = loadedFiles.concat(uniqueNewFiles);
         updateFileListUI();
-        console.log('--- handleFiles finished ---');
+        console.log('--- handleFiles finished (content reading mode) ---');
     }
 
     function removeFileAtIndex(index) {
         if (index > -1 && index < loadedFiles.length) {
-            loadedFiles.splice(index, 1); // Remove 1 element at the given index
-            console.log('Updated loadedFiles after remove:', JSON.parse(JSON.stringify(loadedFiles)));
+            loadedFiles.splice(index, 1);
             updateFileListUI();
         }
     }

@@ -17,4 +17,4 @@ if __name__ == '__main__':
     )
     
     # No se necesitan argumentos especiales para el servidor
-    webview.start(debug=True)
+    webview.start(debug=False)
