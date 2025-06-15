@@ -1,0 +1,165 @@
+/* Estilos generales y de la fuente */
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+/* Contenedor principal centrado */
+.container {
+    max-width: 600px;
+    width: 100%;
+    padding: 40px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    text-align: center;
+}
+
+header h1 {
+    font-size: 28px;
+    margin-bottom: 8px;
+}
+
+header p {
+    font-size: 16px;
+    color: #6c757d;
+    margin-bottom: 30px;
+}
+
+/* Zona de Drag and Drop */
+#drop-zone {
+    border: 2px dashed #dee2e6;
+    border-radius: 8px;
+    padding: 40px 20px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+#drop-zone.dragover {
+    background-color: #e9ecef;
+    border-color: #0d6efd;
+}
+
+#drop-zone p {
+    margin: 0 0 8px 0;
+    color: #6c757d;
+}
+
+#drop-zone .formats {
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* Estilos de botones */
+.btn {
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #0d6efd;
+    color: white;
+}
+
+.btn:hover {
+    background-color: #0b5ed7;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.btn.btn-secondary {
+    background-color: #6c757d;
+}
+
+.btn.btn-secondary:hover {
+    background-color: #5c636a;
+}
+
+.btn.btn-process {
+    width: 100%;
+    margin-top: 15px;
+}
+
+.btn:disabled {
+    background-color: #adb5bd;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Separador "or" */
+.separator {
+    margin: 20px 0;
+    color: #adb5bd;
+    font-weight: 500;
+}
+
+/* Lista de archivos */
+#file-list-container {
+    margin-top: 30px;
+    text-align: left;
+    border-top: 1px solid #e9ecef;
+    padding-top: 20px;
+}
+
+#file-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 10px 0;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+#file-list li {
+    background-color: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 5px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    display: flex;
+    /* Added to align file name and button */
+    justify-content: space-between;
+    /* Added to push button to the right */
+    align-items: center;
+    /* Added for vertical alignment */
+}
+
+/* New styles for the remove button */
+.btn-remove-file {
+    background-color: #dc3545;
+    /* A common red for delete/remove actions */
+    color: white;
+    padding: 4px 8px;
+    /* Smaller padding for a smaller button */
+    font-size: 12px;
+    /* Smaller font size */
+    font-weight: normal;
+    margin-left: 10px;
+    /* Space between file name and button */
+    border-radius: 4px;
+    line-height: 1.5;
+    /* Adjust line height if text isn't centered well */
+}
+
+.btn-remove-file:hover {
+    background-color: #c82333;
+    /* Darker red on hover */
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* Footer */
+footer .terms {
+    margin-top: 30px;
+    font-size: 12px;
+    color: #6c757d;
+}
+
+/* Clase de utilidad para ocultar elementos */
+.hidden {
+    display: none;
+}

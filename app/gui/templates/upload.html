@@ -4,129 +4,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cargar Datos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        /* Estilos para el estado de 'arrastre' */
-        .drag-over {
-            background-color: #eef2ff !important;
-            border-color: #4f46e5 !important;
-        }
-    </style>
+    <title>Cargar Datos Históricos</title>
+    <link rel="stylesheet" href="./css/upload.css">
 </head>
 
-<body class="bg-gray-100 flex items-center justify-center min-h-screen font-sans">
+<body>
+    <div class="container">
+        <header>
+            <h1>Upload Historical Data</h1>
+            <p>Upload your historical match data in CSV format. The system will automatically validate the file format
+                and data structure.</p>
+        </header>
 
-    <div class="bg-white p-8 md:p-10 rounded-2xl shadow-lg w-full max-w-2xl mx-4">
-
-        <!-- Alertas de estado -->
-        <div id="alert-container" class="mb-6"></div>
-
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">Upload Historical Data</h1>
-        <p class="text-gray-600 mb-8">
-            Upload your historical match data in CSV format. The system will automatically validate the file format and
-            data structure to ensure compatibility with the prediction model.
-        </p>
-
-        <!-- Zona para arrastrar y soltar archivos -->
-        <div id="dropZone"
-            class="border-2 border-dashed border-gray-300 rounded-xl bg-gray-50 text-center py-10 transition-all duration-300">
-            <div class="flex flex-col items-center justify-center">
-                <i class="fa-solid fa-cloud-arrow-up text-5xl text-gray-400 mb-4"></i>
-                <p id="dropZoneText" class="text-gray-700 font-semibold text-lg">Drag and drop your file here</p>
-                <p class="text-gray-500 mt-1">Supported formats: CSV</p>
-
-                <button type="button" onclick="browseFiles()"
-                    class="mt-4 bg-white text-gray-700 font-semibold py-2 px-5 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">
-                    Browse Files
-                </button>
+        <main>
+            <div id="drop-zone">
+                <p>Drag and drop your file here</p>
+                <p class="formats">Supported formats: CSV</p>
+                <input type="file" id="file-input" hidden multiple accept=".csv">
+                <button id="browse-btn" class="btn">Browse Files</button>
             </div>
-        </div>
 
-        <div class="mt-2 text-center">
-            <p class="text-xs text-gray-500">By uploading, you agree to our terms of service and privacy policy.</p>
-        </div>
+            <div class="separator">or</div>
+
+            <button id="load-default-btn" class="btn btn-secondary">Use Default Datasets</button>
+
+            <div id="file-list-container" class="hidden">
+                <h3>Files to Process:</h3>
+                <ul id="file-list"></ul>
+                <button id="process-btn" class="btn btn-process" disabled>Process Files</button>
+            </div>
+        </main>
+
+        <footer>
+            <p class="terms">By uploading, you agree to our terms of service and privacy policy.</p>
+        </footer>
     </div>
 
-    <script>
-        const dropZone = document.getElementById('dropZone');
-        const dropZoneText = document.getElementById('dropZoneText');
-        const alertContainer = document.getElementById('alert-container');
-
-        // --- MANEJO DE DRAG & DROP ---
-
-        // Prevenir el comportamiento por defecto del navegador
-        document.addEventListener('dragover', e => e.preventDefault());
-        document.addEventListener('drop', e => e.preventDefault());
-
-        dropZone.addEventListener('dragover', () => {
-            dropZone.classList.add('drag-over');
-        });
-
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('drag-over');
-        });
-
-        dropZone.addEventListener('drop', (event) => {
-            event.preventDefault();
-            dropZone.classList.remove('drag-over');
-
-            // Obtener la ruta del archivo del evento de drop
-            const file = event.dataTransfer.files[0];
-            if (file) {
-                // pywebview nos da la ruta en el objeto path
-                handleFile(file.path);
-            }
-        });
-
-        // --- MANEJO DEL BOTÓN "BROWSE FILES" ---
-
-        async function browseFiles() {
-            // Llamamos a la función 'select_file' de nuestra API de Python
-            const result = await pywebview.api.select_file();
-
-            if (result.status === 'success') {
-                handleFile(result.path);
-            }
-        }
-
-        // --- LÓGICA CENTRAL PARA MANEJAR EL ARCHIVO ---
-
-        async function handleFile(filePath) {
-            // Mostrar el nombre del archivo en la UI
-            const fileName = filePath.split(/[\\/]/).pop();
-            dropZoneText.innerText = `File Selected: ${fileName}`;
-
-            // Llamar a la función de Python para que procese el archivo
-            const processResult = await pywebview.api.process_dropped_file(filePath);
-
-            if (processResult.status === 'success') {
-                showAlert('success', processResult.message);
-                // Aquí podrías navegar a otra página si el procesamiento fue exitoso
-                // window.location.href = 'dashboard.html';
-            } else {
-                showAlert('error', `Error: ${processResult.message}`);
-            }
-        }
-
-        // --- FUNCIÓN UTILITARIA PARA MOSTRAR ALERTAS ---
-
-        function showAlert(type, message) {
-            const bgColor = type === 'success' ? 'bg-green-100' : 'bg-red-100';
-            const textColor = type === 'success' ? 'text-green-800' : 'text-red-800';
-
-            const alertDiv = document.createElement('div');
-            alertDiv.className = `p-4 rounded-lg ${bgColor} ${textColor}`;
-            alertDiv.setAttribute('role', 'alert');
-            alertDiv.innerText = message;
-
-            // Limpiar alertas anteriores y mostrar la nueva
-            alertContainer.innerHTML = '';
-            alertContainer.appendChild(alertDiv);
-        }
-
-    </script>
+    <script src="./js/upload.js"></script>
 </body>
 
 </html>
