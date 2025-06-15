@@ -1,65 +1,49 @@
-import webview
 import os
 
-class API:
-    """
-    Contiene todos los métodos que queremos que sean accesibles desde JavaScript.
-    """
+class Api:
     def __init__(self):
         self.window = None
+        # Define la ruta a tus datasets por defecto
+        self.default_data_path = os.path.join('data', 'default_datasets')
 
-    def select_file(self):
+    def set_window(self, window):
+        self.window = window
+
+    def load_default_datasets(self):
         """
-        Abre un diálogo nativo para seleccionar un archivo.
-        Está configurado para aceptar CSV, pero es fácil de extender.
+        Lee los nombres de los archivos en la carpeta de datasets por defecto
+        y los devuelve a JavaScript.
         """
-        if not self.window:
-            self.window = webview.windows[0]
+        try:
+            files = [f for f in os.listdir(self.default_data_path) if f.endswith('.csv')]
+            return files
+        except FileNotFoundError:
+            return [] # Devuelve una lista vacía si la carpeta no existe
 
-        # Definimos los tipos de archivo permitidos.
-        # Para añadir más, simplemente expande la tupla.
-        # Ej: ('Todos los archivos (*.*)', 'Archivos de Datos (*.csv;*.arff;*.xls)')
-        file_types = ('Archivos CSV (*.csv)',)
-
-        result = self.window.create_file_dialog(
-            webview.OPEN_DIALOG,
-            allow_multiple=False,
-            file_types=file_types
-        )
-
-        # El diálogo devuelve una tupla. Si se selecciona un archivo,
-        # devolvemos la ruta. Si se cancela, devolvemos None.
-        if result:
-            file_path = result[0]
-            print(f"Archivo seleccionado con el botón: {file_path}")
-            # Devolvemos un diccionario para que JS lo pueda interpretar fácilmente
-            return {'status': 'success', 'path': file_path}
-        else:
-            return {'status': 'cancelled'}
-
-    def process_dropped_file(self, file_path):
+    def process_files(self, files_to_process):
         """
-        Esta función es llamada por JavaScript cuando un archivo es
-        arrastrado y soltado en la ventana.
+        Recibe la lista de archivos desde JS y comienza el procesamiento.
         """
-        # Aquí es donde conectarías tu lógica de procesamiento principal
-        print(f"Archivo recibido por drag & drop: {file_path}")
+        print("Recibido para procesar:", files_to_process)
         
-        # --- INICIO DE LA LÓGICA DE PROCESAMIENTO ---
-        # from core_logic.data_processing import procesar_csv
-        # from core_logic.model_management import entrenar_modelo
-        # try:
-        #     df = procesar_csv(file_path)
-        #     entrenar_modelo(df)
-        #     # Devuelve un mensaje de éxito a la interfaz
-        #     return {'status': 'success', 'message': f'Modelo entrenado con {os.path.basename(file_path)}'}
-        # except Exception as e:
-        #     # Devuelve un mensaje de error a la interfaz
-        #     return {'status': 'error', 'message': str(e)}
-        # --- FIN DE LA LÓGICA DE PROCESAMIENTO ---
+        # files_to_process es una lista de diccionarios, ej:
+        # [{'name': 'season-2324.csv', 'path': None, 'type': 'default'},
+        #  {'name': 'my_upload.csv', 'path': 'C:\\Users\\user\\Desktop\\my_upload.csv', 'type': 'uploaded'}]
         
-        # Por ahora, solo devolvemos éxito para el ejemplo.
-        return {
-            'status': 'success',
-            'message': f"Archivo '{os.path.basename(file_path)}' listo para ser procesado."
-        }
+        final_file_paths = []
+        for file_info in files_to_process:
+            if file_info['type'] == 'default':
+                # Construye la ruta completa para los archivos por defecto
+                path = os.path.join(self.default_data_path, file_info['name'])
+                final_file_paths.append(path)
+            elif file_info['type'] == 'uploaded' and file_info.get('path'):
+                # Usa la ruta absoluta de los archivos subidos
+                final_file_paths.append(file_info['path'])
+
+        print("Rutas finales a procesar:", final_file_paths)
+        
+        # --- AQUÍ VA TU LÓGICA DE PROCESAMIENTO ---
+        # Llama a tus funciones de data_processor.py y model_manager.py
+        # usando `final_file_paths` como la lista de CSVs a combinar.
+        
+        return {"status": "success", "message": f"{len(final_file_paths)} archivos procesados con éxito."}
