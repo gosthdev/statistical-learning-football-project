@@ -1,0 +1,5 @@
+FEATURES = []
+HOME_TARGET = 'FTHG'
+AWAY_TARGET = 'FTAG'
+N = 5
+ESSENTIAL_COLUMNS = ['Date', 'HomeTeam', 'AwayTeam', 'FTHG', 'FTAG']
