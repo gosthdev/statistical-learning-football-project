@@ -3,6 +3,7 @@ from enum import Enum
 from pre_processor import PreProcessor
 from features.feature_avg_goals import AvgGoalsCalculator
 from features.feature_streaks import StreaksCalculator
+from features.feature_avg_shots import AvgShotsCalculator
 from config import N
 class DataType(Enum):
     RAW = 'raw'
@@ -25,8 +26,9 @@ class DataManager:
     def process_data(self):
         # Obtaining data
         self.data = PreProcessor(self.working_path).get_data()
-        AvgGoalsCalculator().calculate(self.data, N)
-        StreaksCalculator().calculate(self.data, N)
+        self.data = AvgGoalsCalculator().calculate(self.data, N)
+        self.data = StreaksCalculator().calculate(self.data, N)
+        self.data = AvgShotsCalculator().calculate(self.data, N)
         pass
 
     def _save_data(self, path):

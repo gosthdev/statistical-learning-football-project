@@ -2,7 +2,7 @@ import pandas as pd
 from .base_calculator import FeatureCalculator
 from .utils import get_historical
 from config import AVG_SHOTS_COLUMNS
-class AvgGoalsCalculator(FeatureCalculator):
+class AvgShotsCalculator(FeatureCalculator):
     def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
         print("Calculating average goals...")
         
