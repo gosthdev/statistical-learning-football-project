@@ -5,26 +5,14 @@ import pandas as pd
 
 from config import ESSENTIAL_COLUMNS
 
-class DataType(Enum):
-    RAW = 'raw'
-    DEFAULT = 'default'
+
 
 class PreProcessor:
-    def __init__(self, data_type=DataType.RAW):
-        self.default_datasets_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'default_datasets')
-        self.raw_data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'raw')
-        self.processed_data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
-        
-        if data_type == DataType.RAW:
-            self.working_path = self.raw_data_path
-        elif data_type == DataType.DEFAULT:
-            self.working_path = self.default_datasets_path
-        else:
-            raise ValueError("data_type must be a DataType enum")
-            
+    def __init__(self, working_path):
+        self.working_path = working_path
         self.data = None
 
-    def normalize(self):
+    def _normalize(self):
         data_files = glob(os.path.join(self.working_path, "*.csv"))
 
         if not data_files:
@@ -44,5 +32,5 @@ class PreProcessor:
 
     def get_data(self):
         if self.data is None:
-            self.normalize()
+            self._normalize()
         return self.data
