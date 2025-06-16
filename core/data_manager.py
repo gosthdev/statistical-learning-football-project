@@ -1,9 +1,14 @@
 import os
 from enum import Enum
 from pre_processor import PreProcessor
-from features.feature_avg_goals import AvgGoalsCalculator
-from features.feature_streaks import StreaksCalculator
-from features.feature_avg_shots import AvgShotsCalculator
+from features import (
+    AvgGoalsCalculator,
+    StreaksCalculator,
+    AvgShotsCalculator,
+    AvgCornersCalculator,
+    AvgPointsCalculator
+)
+from datetime import datetime
 from config import N
 class DataType(Enum):
     RAW = 'raw'
@@ -11,9 +16,8 @@ class DataType(Enum):
 class DataManager: 
 
     def __init__(self, data_type=DataType.RAW):
-        self.save_data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
-        self.data = None
-
+        date = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+        self.save_data_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed', (date + '.csv'))
 
         if data_type == DataType.RAW:
             self.working_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'raw')
@@ -24,16 +28,19 @@ class DataManager:
 
 
     def process_data(self):
-        # Obtaining data
-        self.data = PreProcessor(self.working_path).get_data()
-        self.data = AvgGoalsCalculator().calculate(self.data, N)
-        self.data = StreaksCalculator().calculate(self.data, N)
-        self.data = AvgShotsCalculator().calculate(self.data, N)
-        pass
+        try:
+            self.data = PreProcessor(self.working_path).get_data()
+            self.data = AvgGoalsCalculator().calculate(self.data, N)
+            self.data = StreaksCalculator().calculate(self.data, N)
+            self.data = AvgShotsCalculator().calculate(self.data, N)
+            self.data = AvgCornersCalculator().calculate(self.data, N)
+            self.data = AvgPointsCalculator().calculate(self.data, N)
+        except Exception as e:
+            print(f"Error processing data: {e}")
 
-    def _save_data(self, path):
+    def save_data(self):
         if self.data is not None:
-            self.data.to_csv(path, index=False)
+            self.data.to_csv(self.save_data_path, index=False)
         else:
             raise ValueError("No data to save. Please load or process data first.")
         
@@ -49,3 +56,4 @@ if __name__ == "__main__":
     data_manager = DataManager(data_type=DataType.DEFAULT)
     data_manager.process_data()
     data_manager.print_data()
+    data_manager.save_data()
