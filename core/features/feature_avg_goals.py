@@ -1,15 +1,15 @@
 import pandas as pd
-from base_calculator import FeatureCalculator
-from utils import get_historical
+from .base_calculator import FeatureCalculator
+from .utils import get_historical
 from config import AVG_GOALS_COLUMNS
 class AvgGoalsCalculator(FeatureCalculator):
-    def calculate(self, full_df: pd.DataFrame, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
+    def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
         print("Calculating average goals...")
         
-        results = full_df.apply(
+        results = processed_df.apply(
             self._calculate_avg_previous_goals,
             axis=1,
-            args=(full_df, n_matches)
+            args=(processed_df, n_matches)
         )
 
         results.columns = AVG_GOALS_COLUMNS
