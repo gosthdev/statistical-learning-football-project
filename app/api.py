@@ -1,23 +1,18 @@
 import os
-import shutil # Keep for potential future use, but not for writing content
+import shutil
+from core.data_manager import DataManager, DataType
 
 class Api:
     def __init__(self):
         self.window = None
-        # Path to default datasets, relative to project root
         self.default_data_path = os.path.join('data', 'default_datasets')
-        # Path to where raw files will be copied, relative to project root
         self.raw_data_output_path = os.path.join('data', 'raw')
 
     def set_window(self, window):
         self.window = window
 
     def load_default_datasets(self):
-        """
-        Reads file names from the default datasets folder and returns them to JavaScript.
-        """
         try:
-            # Assuming main.py runs from the project root, paths are relative to it.
             if not os.path.isdir(self.default_data_path):
                 print(f"Error: Default dataset directory not found at '{self.default_data_path}'.")
                 return []
@@ -28,74 +23,64 @@ class Api:
             return []
 
     def process_files(self, files_to_process):
-        """
-        Receives the list of files from JS.
-        Copies each valid file to the self.raw_data_output_path (data/raw/) directory.
-        """
-        print("Received for processing (content mode):", 
-              [{'name': f.get('name'), 'type': f.get('type'), 'content_length': len(f.get('content')) if f.get('content') else 0} for f in files_to_process])
+        print("Received for processing:", 
+              [{'name': f.get('name'), 'type': f.get('type')} for f in files_to_process])
+
+        # --- 1. Determinar el modo de operación ---
+        has_uploaded_files = any(f.get('type') == 'uploaded' for f in files_to_process)
+        has_default_files = any(f.get('type') == 'default' for f in files_to_process)
         
-        files_to_write_to_raw = [] # Store {'name': ..., 'content': ...} for uploaded files
+        data_manager_type = None
 
-        # Determine full source paths for each file
-        for file_info in files_to_process:
-            original_name = file_info.get('name')
-            file_type = file_info.get('type')
-            file_content = file_info.get('content') # Content from JS
+        # --- 2. Preparar los datos si es necesario ---
+        if has_uploaded_files:
+            print("Processing mode: RAW (uploaded files found).")
+            # Filtrar solo los archivos subidos para escribirlos en disco
+            files_to_write = [f for f in files_to_process if f.get('type') == 'uploaded' and f.get('content') is not None]
 
-            if file_type == 'default':
-                print(f"Info: Default file '{original_name}' will be skipped for writing to raw directory.")
-                # Default files are not copied to data/raw as per new requirement
-                continue 
-            
-            elif file_type == 'uploaded':
-                if original_name and file_content is not None: # Check if content is present (even if empty string)
-                    files_to_write_to_raw.append({'name': original_name, 'content': file_content})
-                    print(f"Info: Uploaded file '{original_name}' (content length: {len(file_content)}) is eligible for writing.")
-                elif not original_name:
-                    print(f"Warning: Uploaded file has no name. Skipping.")
-                else: # No content
-                    print(f"Warning: Uploaded file '{original_name}' has no content. Skipping.")
-            else:
-                print(f"Warning: Unknown file type for '{original_name}': {file_type}. Skipping.")
+            if not files_to_write:
+                return {"status": "error", "message": "Uploaded files were found, but they have no content to save."}
 
-        if not files_to_write_to_raw:
-            return {"status": "info", "message": "No uploaded files with content were found to write to the raw directory."}
-
-        # Ensure the raw_data_output_path directory exists
-        try:
-            os.makedirs(self.raw_data_output_path, exist_ok=True)
-        except OSError as e:
-            print(f"Error creating directory {self.raw_data_output_path}: {e}")
-            return {"status": "error", "message": f"Could not create destination directory: {e}"}
-
-        written_files_count = 0
-        failed_writes_info = []
-
-        print(f"Attempting to write content of {len(files_to_write_to_raw)} uploaded file(s) to '{self.raw_data_output_path}'...")
-
-        for detail in files_to_write_to_raw:
-            file_name_for_destination = detail['name']
-            content_to_write = detail['content']
-            dest_path = os.path.join(self.raw_data_output_path, file_name_for_destination)
-            
+            # Asegurarse de que el directorio 'raw' exista
             try:
-                with open(dest_path, 'w', encoding='utf-8') as f: # Open in text write mode
-                    f.write(content_to_write)
-                print(f"Content written to: '{dest_path}'")
-                written_files_count += 1
-            except Exception as e:
-                error_msg = f"Error writing content for '{file_name_for_destination}' to '{dest_path}': {e}"
-                print(error_msg)
-                failed_writes_info.append({'name': file_name_for_destination, 'error': str(e)})
+                os.makedirs(self.raw_data_output_path, exist_ok=True)
+            except OSError as e:
+                return {"status": "error", "message": f"Could not create destination directory: {e}"}
+
+            # Escribir los archivos en 'data/raw'
+            for detail in files_to_write:
+                dest_path = os.path.join(self.raw_data_output_path, detail['name'])
+                try:
+                    with open(dest_path, 'w', encoding='utf-8') as f:
+                        f.write(detail['content'])
+                    print(f"Content for '{detail['name']}' written to: '{dest_path}'")
+                except Exception as e:
+                    print(f"Error writing content for '{detail['name']}': {e}")
+                    return {"status": "error", "message": f"Failed to write file {detail['name']}: {e}"}
+            
+            # Si todo salió bien, establecer el tipo para el DataManager
+            data_manager_type = DataType.RAW
+
+        elif has_default_files:
+            print("Processing mode: DEFAULT (no uploaded files, default files selected).")
+            # No se necesita escribir archivos, solo establecer el tipo
+            data_manager_type = DataType.DEFAULT
         
-        if written_files_count == len(files_to_write_to_raw) and written_files_count > 0:
-            return {"status": "success", "message": f"{written_files_count} uploaded file(s) successfully written to '{self.raw_data_output_path}'."}
-        elif written_files_count > 0:
-            return {"status": "partial_success", 
-                    "message": f"{written_files_count} of {len(files_to_write_to_raw)} file(s) written. {len(failed_writes_info)} failed.",
-                    "failures": failed_writes_info}
-        else: # All attempts to write failed (but there were files to write)
-            return {"status": "error", 
-                    "message": f"Failed to write content for any of the eligible uploaded files to '{self.raw_data_output_path}'.",
-                    "failures": failed_writes_info}
+        # --- 3. Ejecutar el DataManager si se determinó un modo ---
+        if data_manager_type:
+            try:
+                print(f"Initializing DataManager with type: {data_manager_type.name}")
+                data_manager = DataManager(data_type=data_manager_type)
+                data_manager.process_data()
+                data_manager.save_data()
+                
+                return {
+                    "status": "success", 
+                    "message": f"Data processed from '{data_manager_type.name}' source. Processed file saved to: {data_manager.save_data_path}"
+                }
+            except Exception as e:
+                print(f"An error occurred during data processing: {e}")
+                return {"status": "error", "message": f"Data processing failed: {e}"}
+        else:
+            # Este caso se da si la lista está vacía o no contiene tipos válidos
+            return {"status": "info", "message": "No files were selected for processing."}
