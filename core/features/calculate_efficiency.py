@@ -1,8 +1,7 @@
 import pandas as pd
 from .base_calculator import FeatureCalculator
 from .utils import get_historical
-
-EFFICIENCY_COLUMNS = ['H_Eff_GoalsPerShot', 'A_Eff_GoalsPerShot']
+from config import EFFICIENCY_COLUMNS
 
 class EfficiencyCalculator(FeatureCalculator):
     def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
@@ -20,7 +19,7 @@ class EfficiencyCalculator(FeatureCalculator):
         away_team = row['AwayTeam']
         local_history, away_history = get_historical(row, all_matches, n_matches)
 
-        # local/home efficiency
+        # home efficiency
         l_eff = 0.0
         if not local_history.empty:
             goles_local = local_history.apply(lambda x: x['FTHG'] if x['HomeTeam'] == home_team else x['FTAG'], axis=1).sum()
@@ -28,7 +27,7 @@ class EfficiencyCalculator(FeatureCalculator):
             if remates_local > 0:
                 l_eff = goles_local / remates_local
 
-        # visitor/away efficiency
+        # away efficiency
         v_eff = 0.0
         if not away_history.empty:
             goles_visitante = away_history.apply(lambda x: x['FTHG'] if x['HomeTeam'] == away_team else x['FTAG'], axis=1).sum()
