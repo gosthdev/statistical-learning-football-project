@@ -1,15 +1,16 @@
 import os
 from enum import Enum
-from pre_processor import PreProcessor
-from features import (
+from .pre_processor import PreProcessor
+from .features import (
     AvgGoalsCalculator,
     StreaksCalculator,
     AvgShotsCalculator,
     AvgCornersCalculator,
-    AvgPointsCalculator
+    AvgPointsCalculator,
+    EfficiencyCalculator
 )
 from datetime import datetime
-from config import N
+from .config import N
 class DataType(Enum):
     RAW = 'raw'
     DEFAULT = 'default'
@@ -35,6 +36,7 @@ class DataManager:
             self.data = AvgShotsCalculator().calculate(self.data, N)
             self.data = AvgCornersCalculator().calculate(self.data, N)
             self.data = AvgPointsCalculator().calculate(self.data, N)
+            self.data = EfficiencyCalculator().calculate(self.data)
         except Exception as e:
             print(f"Error processing data: {e}")
 
@@ -53,7 +55,7 @@ class DataManager:
 
 if __name__ == "__main__":
     # Example usage
-    data_manager = DataManager(data_type=DataType.DEFAULT)
+    data_manager = DataManager(data_type=DataType.RAW)
     data_manager.process_data()
     data_manager.print_data()
     data_manager.save_data()
