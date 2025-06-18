@@ -36,7 +36,7 @@ class DataManager:
             self.data = AvgShotsCalculator().calculate(self.data, N)
             self.data = AvgCornersCalculator().calculate(self.data, N)
             self.data = AvgPointsCalculator().calculate(self.data, N)
-            self.data = EfficiencyCalculator().calculate(self.data)
+            self.data = EfficiencyCalculator().calculate(self.data, N)
         except Exception as e:
             print(f"Error processing data: {e}")
 
