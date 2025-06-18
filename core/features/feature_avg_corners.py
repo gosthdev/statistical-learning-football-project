@@ -1,7 +1,8 @@
 import pandas as pd
 from .base_calculator import FeatureCalculator
 from .utils import get_historical
-from config import AVG_CORNERS_COLUMNS
+from ..config import AVG_CORNERS_COLUMNS
+
 class AvgCornersCalculator(FeatureCalculator):
     def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
         print("Calculating average corners...")

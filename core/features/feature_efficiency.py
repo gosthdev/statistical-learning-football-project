@@ -1,7 +1,7 @@
 import pandas as pd
 from .base_calculator import FeatureCalculator
 from .utils import get_historical
-from config import EFFICIENCY_COLUMNS
+from ..config import EFFICIENCY_COLUMNS
 
 class EfficiencyCalculator(FeatureCalculator):
     def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
