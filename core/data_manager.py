@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from enum import Enum
 from .pre_processor import PreProcessor
 from .features import (
@@ -39,6 +40,40 @@ class DataManager:
             self.data = EfficiencyCalculator().calculate(self.data, N)
         except Exception as e:
             print(f"Error processing data: {e}")
+    
+    def get_data_as_json(self):
+        """ Returns the processed data as a JSON string."""
+        self.load_data()
+        if self.data is not None:
+            return self.data.to_json(orient='records')
+        else:
+            return '{"error": "No data available. Please load or process data first."}'
+        
+    def load_data(self):
+        """ Loads the most recent processed data file."""
+        processed_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
+        
+        try:
+            if not os.path.isdir(processed_folder) or not os.listdir(processed_folder):
+                print(f"Processed data directory is empty or not found: {processed_folder}")
+                self.data = None
+                return
+
+            csv_files = [f for f in os.listdir(processed_folder) if f.endswith('.csv')]
+            if not csv_files:
+                print(f"No CSV files found in {processed_folder}")
+                self.data = None
+                return
+
+            latest_file = max(csv_files, key=lambda f: os.path.getmtime(os.path.join(processed_folder, f)))
+            latest_file_path = os.path.join(processed_folder, latest_file)
+            
+            print(f"Loading latest processed file: {latest_file_path}")
+            self.data = pd.read_csv(latest_file_path)
+
+        except Exception as e:
+            print(f"Error loading latest data file: {e}")
+            self.data = None
 
     def save_data(self):
         if self.data is not None:
@@ -56,6 +91,5 @@ class DataManager:
 if __name__ == "__main__":
     # Example usage
     data_manager = DataManager(data_type=DataType.RAW)
-    data_manager.process_data()
+    data_manager.load_data()
     data_manager.print_data()
-    data_manager.save_data()
