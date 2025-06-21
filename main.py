@@ -9,7 +9,7 @@ if __name__ == '__main__':
 
     window = webview.create_window(
         'Upload Files',
-        os.path.join(gui_dir, 'upload.html'),
+        os.path.join(gui_dir, 'layout.html'),
         js_api=api,
         min_size=(800, 650)
     )
