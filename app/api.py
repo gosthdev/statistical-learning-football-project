@@ -84,3 +84,7 @@ class Api:
         else:
             # Este caso se da si la lista está vacía o no contiene tipos válidos
             return {"status": "info", "message": "No files were selected for processing."}
+        
+    def get_data(self):
+        data_loader = DataManager(data_type=DataType.RAW)
+        return data_loader.get_data_as_json()
