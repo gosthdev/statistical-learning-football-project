@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     const sidebarContainer = document.getElementById('sidebar-container');
     const mainContent = document.getElementById('main-content');
-
+    let data = null;
     // --- NAVIGATION CORE ---
 
     // Main function to initialize the application
@@ -12,6 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Could not load sidebar.');
             sidebarContainer.innerHTML = await response.text();
             addNavListeners();
+
+            // Elimina el mensaje de bienvenida inicial antes de cargar la primera vista.
+            const welcomeMessage = mainContent.querySelector('.welcome-message');
+            if (welcomeMessage) {
+                welcomeMessage.remove();
+            }
+
             // Load initial view based on URL hash or default to dashboard
             const initialView = window.location.hash.substring(1) || 'dashboard';
             loadView(initialView);
@@ -37,22 +44,53 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load the content of a view into the main area
     async function loadView(viewName) {
-        try {
-            const response = await fetch(`${viewName}.html`);
-            if (!response.ok) throw new Error(`Could not find ${viewName}.html`);
-
-            mainContent.innerHTML = await response.text();
-            document.title = `${viewName.charAt(0).toUpperCase() + viewName.slice(1)} - Goal Predictor`;
-            updateActiveLink(viewName);
-
-            // If the dashboard is loaded, initialize its specific logic
-            if (viewName === 'dashboard') {
-                initializeDashboard();
+        // Oculta todas las vistas existentes
+        const views = mainContent.querySelectorAll('.view-container');
+        views.forEach(view => view.style.display = 'none');
+    
+        const viewId = `view-${viewName}`;
+        let viewContainer = document.getElementById(viewId);
+    
+        // Si la vista no existe en el DOM, la creamos y la llenamos
+        if (!viewContainer) {
+            console.log(`Creating view '${viewName}' for the first time.`);
+            
+            // 1. Crea el contenedor de la vista primero y añádelo al DOM.
+            viewContainer = document.createElement('div');
+            viewContainer.id = viewId;
+            viewContainer.className = 'view-container';
+            mainContent.appendChild(viewContainer);
+    
+            try {
+                // 2. Intenta buscar el contenido HTML.
+                const response = await fetch(`${viewName}.html`);
+                if (!response.ok) {
+                    throw new Error(`Could not load ${viewName}.html (Status: ${response.status})`);
+                }
+                
+                const html = await response.text();
+                viewContainer.innerHTML = html;
+    
+                // 3. Ejecuta los inicializadores específicos de la vista.
+                if (viewName === 'dashboard') {
+                    initializeDashboard();
+                } else if (viewName === 'predictions') {
+                    initializePredictions();
+                }
+    
+            } catch (error) {
+                // 4. En caso de fallo, pon el mensaje de error DENTRO del contenedor de la vista.
+                console.error(`Error loading view: ${viewName}`, error);
+                viewContainer.innerHTML = `<div class="welcome-message"><h2>Error loading page.</h2><p>Could not find content for '${viewName}'.</p></div>`;
             }
-        } catch (error) {
-            console.error(`Error loading view: ${viewName}`, error);
-            mainContent.innerHTML = `<div class="welcome-message"><h2>Error loading page.</h2></div>`;
+        } else {    
+            console.log(`Showing cached view '${viewName}'.`);
         }
+    
+        // 5. Muestra el contenedor de la vista correcta (ya sea con contenido o con un error).
+        viewContainer.style.display = 'flex';
+        document.title = `${viewName.charAt(0).toUpperCase() + viewName.slice(1)} - Goal Predictor`;
+        updateActiveLink(viewName);
     }
     
     // Update which menu link appears as "active"
@@ -102,9 +140,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 // This will be replaced by a real API call to the Python backend
                 loadingMessage.textContent = 'Loading data...';
                 
-                const jsonString = await pywebview.api.get_data();
-                // Parse the JSON string into a JavaScript array of objects
-                const data = JSON.parse(jsonString);
+                if (data === null) {
+                    console.log('Fetching data from Python API...');
+                    const jsonString = await pywebview.api.get_data();
+                    // Parse the JSON string into a JavaScript array of objects
+                    data = JSON.parse(jsonString);
+                }
                 renderTable(data);
 
             } catch (error) {

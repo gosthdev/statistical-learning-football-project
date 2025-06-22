@@ -18,6 +18,8 @@ body {
     margin: 0;
     -webkit-font-smoothing: antialiased;
     font-size: 16px;
+    overflow: hidden;
+    /* 1. Evita que toda la página se desplace */
 }
 
 * {
@@ -27,7 +29,8 @@ body {
 /* --- Estructura Principal de la Aplicación --- */
 .app-container {
     display: flex;
-    min-height: 100vh;
+    height: 100vh;
+    /* 2. Fija la altura del contenedor a la de la ventana */
 }
 
 /* --- Barra Lateral (Sidebar) --- */
@@ -77,10 +80,20 @@ body {
 /* --- Área de Contenido Principal --- */
 .main-content {
     flex-grow: 1;
-    /* Permite que el contenido principal ocupe el resto del espacio */
     padding: 32px 40px;
-    overflow-y: auto;
-    /* Scroll vertical para el contenido si es muy largo */
+    display: flex;
+    flex-direction: column;
+
+    /* NUEVO Y CRUCIAL: Permite que esta área se encoja y contenga a sus hijos anchos */
+    min-width: 0;
+}
+
+/* AÑADIR ESTA REGLA FALTANTE */
+.view-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Mensaje de bienvenida inicial */
@@ -107,8 +120,15 @@ body {
     background-color: var(--surface-color);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    overflow-x: auto;
-    /* LA MAGIA: Crea el scroll horizontal cuando la tabla es muy ancha */
+
+    /* Usamos 'auto' para que muestre scrolls solo cuando sea necesario */
+    overflow: auto;
+
+    /* Hace que el contenedor de la tabla crezca para llenar el espacio vertical */
+    flex-grow: 1;
+
+    /* Asegura que el scroll vertical funcione correctamente dentro de flexbox */
+    min-height: 0;
 }
 
 #data-table {
