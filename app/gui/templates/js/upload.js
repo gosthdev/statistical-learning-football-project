@@ -48,43 +48,34 @@ document.addEventListener('DOMContentLoaded', () => {
     // Iniciar procesamiento de archivos
     processBtn.addEventListener('click', async () => {
         if (loadedFiles.length === 0) return;
-        // Deshabilita el botón para evitar clics múltiples
         processBtn.disabled = true;
         processBtn.textContent = 'Processing...';
         
         try {
-            // Llama a la API de Python para que procese los archivos
-            // Corrected from window.webview.api to pywebview.api
-            const response = await pywebview.api.process_files(loadedFiles); 
+            const response = await pywebview.api.process_files(loadedFiles);
             
-            // Handle the response from Python
-            if (response) {
-                console.log('Processing response:', response); // Log the full response
-                alert(response.message); // Show the message from the Python backend
+            // --- INICIO DEL CÓDIGO DE DEPURACIÓN ---
+            // ¡ESTA ES LA LÍNEA MÁS IMPORTANTE!
+            // Nos mostrará exactamente lo que Python envió.
+            console.log('API Response received:', response);
+            console.log('Type of response:', typeof response);
+            // --- FIN DEL CÓDIGO DE DEPURACIÓN ---
 
-                if (response.status === "success" || response.status === "partial_success") {
-                    // Optionally, clear the file list or navigate
-                    // loadedFiles = []; // Clear list after successful processing
-                    // updateFileListUI();
-                    // console.log("Files processed, navigating to dashboard (if implemented).");
-                    // window.location.href = 'dashboard.html'; // If you have a dashboard page
-                } else if (response.status === "error") {
-                    console.error('Error reported from Python API:', response.message);
-                    if (response.failures && response.failures.length > 0) {
-                        console.error('Failed files:', response.failures);
-                        // You could display these specific failures to the user
-                    }
-                }
+            if (response && response.status === "success") {
+                alert(response.message);
+                window.location.reload(); 
             } else {
-                console.error('No response received from process_files API call.');
-                alert('An unexpected error occurred: No response from server.');
+                // Si llegamos aquí, significa que la condición de arriba falló.
+                // El console.log nos dirá por qué.
+                const errorMessage = response ? response.message : "An unknown error occurred. The response was empty.";
+                alert(errorMessage);
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process Files';
             }
 
         } catch (error) {
             console.error('Error calling process_files API:', error);
-            alert(`An error occurred while processing files: ${error.message || error}`);
-        } finally {
-            // Reactiva el botón
+            alert(`A critical error occurred: ${error.message || 'Could not connect to the backend.'}`);
             processBtn.disabled = false;
             processBtn.textContent = 'Process Files';
         }

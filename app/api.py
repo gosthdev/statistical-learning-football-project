@@ -72,11 +72,18 @@ class Api:
                 print(f"Initializing DataManager with type: {data_manager_type.name}")
                 data_manager = DataManager(data_type=data_manager_type)
                 data_manager.process_data()
-                data_manager.save_data()
+                saved_path = data_manager.save_data() # Guardamos la ruta para el mensaje
                 
+                # --- ¡AQUÍ ESTÁ LA MAGIA! ---
+                # Después de procesar y guardar, le decimos a la ventana que navegue.
+                if self.window:
+                    print(f"Data processed. Navigating to layout.html...")
+                    self.window.load_url('layout.html')
+
+                # Devolvemos el mensaje de éxito. La navegación ocurrirá casi al mismo tiempo.
                 return {
                     "status": "success", 
-                    "message": f"Data processed from '{data_manager_type.name}' source. Processed file saved to: {data_manager.save_data_path}"
+                    "message": f"Data processed from '{data_manager_type.name}' source. Processed file saved to: {saved_path}"
                 }
             except Exception as e:
                 print(f"An error occurred during data processing: {e}")
@@ -88,3 +95,5 @@ class Api:
     def get_data(self):
         data_loader = DataManager(data_type=DataType.RAW)
         return data_loader.get_data_as_json()
+    def check_processed_data(self):
+        return DataManager().check_file_exists()
