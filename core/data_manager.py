@@ -81,6 +81,23 @@ class DataManager:
         else:
             raise ValueError("No data to save. Please load or process data first.")
         
+    def check_file_exists(self):
+        """ Checks if CSV files exist in the processed data directory."""
+        processed_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
+        
+        # Check if directory exists
+        if not os.path.isdir(processed_folder):
+            print(f"Processed data directory not found: {processed_folder}")
+            return False
+            
+        # Check for CSV files specifically
+        csv_files = [f for f in os.listdir(processed_folder) if f.endswith('.csv')]
+        if not csv_files:
+            print(f"No CSV files found in {processed_folder}")
+            return False
+            
+        return True
+    
     def print_data(self):
         if self.data is not None:
             print(self.data.head())
@@ -91,5 +108,6 @@ class DataManager:
 if __name__ == "__main__":
     # Example usage
     data_manager = DataManager(data_type=DataType.RAW)
+    print(data_manager.check_file_exists())
     data_manager.load_data()
     data_manager.print_data()
