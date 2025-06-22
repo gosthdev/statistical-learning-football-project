@@ -1,4 +1,5 @@
 import os
+import glob
 import pandas as pd
 from enum import Enum
 from .pre_processor import PreProcessor
@@ -27,6 +28,13 @@ class DataManager:
             self.working_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'default_datasets')
         else:
             raise ValueError("data_type must be a DataType enum")
+
+        self.processed_data_path = os.path.join('data', 'processed')
+        self.raw_data_path = os.path.join('data', 'raw')
+        self.default_data_path = os.path.join('data', 'default_datasets')
+        # Asegurarse de que los directorios existan al iniciar
+        os.makedirs(self.processed_data_path, exist_ok=True)
+        os.makedirs(self.raw_data_path, exist_ok=True)
 
 
     def process_data(self):
@@ -82,22 +90,25 @@ class DataManager:
             raise ValueError("No data to save. Please load or process data first.")
         
     def check_file_exists(self):
-        """ Checks if CSV files exist in the processed data directory."""
-        processed_folder = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'processed')
+        """
+        Checks if any .csv file exists in the processed data directory.
+        This is a robust way to check for processed data.
+        """
+        # Comprueba si el directorio existe
+        if not os.path.isdir(self.processed_data_path):
+            return False
         
-        # Check if directory exists
-        if not os.path.isdir(processed_folder):
-            print(f"Processed data directory not found: {processed_folder}")
+        # Busca cualquier archivo que termine en .csv en el directorio
+        csv_files = glob.glob(os.path.join(self.processed_data_path, '*.csv'))
+        
+        # Si la lista de archivos CSV no está vacía, significa que hay datos.
+        if csv_files:
+            print(f"DataManager: Found processed files: {csv_files}. Starting main app.")
+            return True
+        else:
+            print("DataManager: No processed files found. Starting upload screen.")
             return False
-            
-        # Check for CSV files specifically
-        csv_files = [f for f in os.listdir(processed_folder) if f.endswith('.csv')]
-        if not csv_files:
-            print(f"No CSV files found in {processed_folder}")
-            return False
-            
-        return True
-    
+
     def print_data(self):
         if self.data is not None:
             print(self.data.head())
