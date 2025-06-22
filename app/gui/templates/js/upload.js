@@ -52,28 +52,17 @@ document.addEventListener('DOMContentLoaded', () => {
         processBtn.textContent = 'Processing...';
         
         try {
-            const response = await pywebview.api.process_files(loadedFiles);
+            // Llama a la API. Python se encargará de la navegación.
+            // Ya no necesitamos hacer nada con la respuesta aquí.
+            await pywebview.api.process_files(loadedFiles);
             
-            // --- INICIO DEL CÓDIGO DE DEPURACIÓN ---
-            // ¡ESTA ES LA LÍNEA MÁS IMPORTANTE!
-            // Nos mostrará exactamente lo que Python envió.
-            console.log('API Response received:', response);
-            console.log('Type of response:', typeof response);
-            // --- FIN DEL CÓDIGO DE DEPURACIÓN ---
-
-            if (response && response.status === "success") {
-                alert(response.message);
-                window.location.reload(); 
-            } else {
-                // Si llegamos aquí, significa que la condición de arriba falló.
-                // El console.log nos dirá por qué.
-                const errorMessage = response ? response.message : "An unknown error occurred. The response was empty.";
-                alert(errorMessage);
-                processBtn.disabled = false;
-                processBtn.textContent = 'Process Files';
-            }
+            // El código aquí abajo probablemente no se ejecute porque
+            // Python cambiará la página, pero es una buena práctica
+            // manejar el caso en que no lo haga.
+            console.log("Processing call sent. Waiting for Python to navigate...");
 
         } catch (error) {
+            // Si la API falla, sí necesitamos reactivar el botón y mostrar un error.
             console.error('Error calling process_files API:', error);
             alert(`A critical error occurred: ${error.message || 'Could not connect to the backend.'}`);
             processBtn.disabled = false;
