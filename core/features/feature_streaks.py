@@ -3,7 +3,7 @@ import pandas as pd
 
 from .base_calculator import FeatureCalculator
 from .utils import get_historical
-from config import STREAK_COLUMNS
+from ..config import STREAK_COLUMNS
 class StreaksCalculator(FeatureCalculator):
     def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
         print("Calculating winning streaks...")

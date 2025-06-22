@@ -1,7 +1,8 @@
 import pandas as pd
 from .base_calculator import FeatureCalculator
 from .utils import get_historical
-from config import AVG_GOALS_COLUMNS
+from ..config import AVG_GOALS_COLUMNS
+
 class AvgGoalsCalculator(FeatureCalculator):
     def calculate(self, processed_df: pd.DataFrame, n_matches: int) -> pd.DataFrame:
         print("Calculating average goals...")
@@ -23,7 +24,7 @@ class AvgGoalsCalculator(FeatureCalculator):
         local_history, away_history = get_historical(row, all_matches, n_matches)
         
         if local_history.empty or away_history.empty:
-            return pd.Series([None, None, None, None])  
+            return pd.Series([None, None, None, None])
         # Calculate goals in favor and against for home team
         h_goals_in_favor = local_history.apply(lambda x: x['FTHG'] if x['HomeTeam'] == home_team else x['FTAG'], axis=1)
         h_goals_against = local_history.apply(lambda x: x['FTAG'] if x['HomeTeam'] == home_team else x['FTHG'], axis=1)

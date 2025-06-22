@@ -1,0 +1,75 @@
+<link rel="stylesheet" href="./css/predictions.css">
+
+<div class="predictions-container">
+    <header class="page-header">
+        <h1>Generate Goal Predictions</h1>
+    </header>
+
+    <section class="matchup-section">
+        <h2>Matchup</h2>
+        <div class="matchup-selector">
+            <!-- Home Team Selection -->
+            <div class="team-selection-wrapper">
+                <div class="team-label">Home Team</div>
+                <div id="home-team-card" class="team-placeholder-card">
+                    <span>Select Home Team</span>
+                </div>
+                <select id="home-team-select" class="team-select">
+                    <option value="">Select a Team</option>
+                </select>
+            </div>
+
+            <span class="vs-separator">VS</span>
+
+            <!-- Away Team Selection -->
+            <div class="team-selection-wrapper">
+                <div class="team-label">Away Team</div>
+                <div id="away-team-card" class="team-placeholder-card">
+                    <span>Select Away Team</span>
+                </div>
+                <select id="away-team-select" class="team-select">
+                    <option value="">Select a Team</option>
+                </select>
+            </div>
+        </div>
+        <div class="date-picker-wrapper">
+            <label for="match-date-input">Match Date</label>
+            <input type="date" id="match-date-input">
+        </div>
+        <div class="predict-button-wrapper">
+            <button class="predict-button">Predict Goals</button>
+        </div>
+    </section>
+
+    <section class="results-section">
+        <h2>Prediction Results</h2>
+        <div class="results-grid">
+            <div class="result-card">
+                <p>Home Team Predicted Goals</p>
+                <span id="home-prediction-result">-</span>
+            </div>
+            <div class="result-card">
+                <p>Away Team Predicted Goals</p>
+                <span id="away-prediction-result">-</span>
+            </div>
+        </div>
+    </section>
+
+    <section class="test-dataset-section">
+        <h2>Test Dataset Matchups</h2>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Home Team</th>
+                        <th>Away Team</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody id="test-matchups-body">
+                    <!-- Los datos de prueba se cargarán aquí -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>

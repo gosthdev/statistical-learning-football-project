@@ -3,7 +3,7 @@ from glob import glob
 import os
 import pandas as pd
 
-from config import ESSENTIAL_COLUMNS
+from .config import ESSENTIAL_COLUMNS
 
 
 
