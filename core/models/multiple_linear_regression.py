@@ -77,6 +77,7 @@ class MultipleLinearRegressionModel(BaseModel):
             joblib.dump(self.model_home, self.home_model_path)
         if self.model_away:
             joblib.dump(self.model_away, self.away_model_path)
+        os.mkdir(os.path.dirname(self.test_path), exist_ok=True)
         self.df.iloc[self.test_index].to_csv(self.test_path, index=False)
         print("Models saved successfully.")
         print(f"Test data saved to {self.test_path}")
