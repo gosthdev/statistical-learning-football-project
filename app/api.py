@@ -11,7 +11,8 @@ class Api:
         self.window = None
         self.default_data_path = os.path.join('data', 'default_datasets')
         self.raw_data_output_path = os.path.join('data', 'raw')
-
+        # Add cache for pagination
+        self._processed_data_cache = None
 
     def set_window(self, window):
         self.window = window
@@ -95,18 +96,65 @@ class Api:
         
     def get_data(self):
         """
-        SUPER RÁPIDO: Ya no lee del disco. Solo devuelve el JSON precargado.
+        Envía solo el primer lote de datos y guarda el resto en caché.
         """
         try:
             print("API: get_data() called. Pushing pre-loaded data to dashboard.")
             if self.window:
-                # Usa directamente la variable importada
-                self.window.evaluate_js(f'renderDashboardData({PROCESSED_DATA_JSON})')
+                try:
+                    # Parse JSON once and cache for future paging requests
+                    if self._processed_data_cache is None:
+                        self._processed_data_cache = json.loads(PROCESSED_DATA_JSON)
+                    
+                    data = self._processed_data_cache
+                    
+                    if isinstance(data, list):
+                        # Only send first 100 rows initially
+                        batch_size = 100
+                        initial_batch = data[:batch_size]
+                        initial_batch_json = json.dumps(initial_batch)
+                        
+                        total_count = len(data)
+                        print(f"Sending first {len(initial_batch)} rows of {total_count} total records")
+                        
+                        self.window.evaluate_js(f'renderDashboardData({initial_batch_json}, {total_count})')
+                    else:
+                        # If not a list, send as is
+                        self.window.evaluate_js(f'renderDashboardData({PROCESSED_DATA_JSON})')
+                except json.JSONDecodeError:
+                    # If invalid JSON, send as is
+                    self.window.evaluate_js(f'renderDashboardData({PROCESSED_DATA_JSON})')
         except Exception as e:
             print(f"API Error in get_data: {e}")
             if self.window:
                 error_message = json.dumps(f"Error fetching data: {e}")
                 self.window.evaluate_js(f'renderDashboardError({error_message})')
+
+    def get_more_data(self, start_index, batch_size):
+        """
+        Returns the next batch of rows for infinite scrolling
+        """
+        try:
+            print(f"API: get_more_data() called. Requesting rows {start_index} to {start_index + batch_size}")
+            
+            # If cache not initialized, do it now
+            if self._processed_data_cache is None:
+                self._processed_data_cache = json.loads(PROCESSED_DATA_JSON)
+                
+            data = self._processed_data_cache
+            
+            if not isinstance(data, list):
+                return []
+                
+            end_index = min(start_index + batch_size, len(data))
+            next_batch = data[start_index:end_index]
+            
+            print(f"Returning {len(next_batch)} additional rows")
+            return next_batch
+            
+        except Exception as e:
+            print(f"API Error in get_more_data: {e}")
+            return []
     
     def get_test_data(self):
         """

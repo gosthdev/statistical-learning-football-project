@@ -129,6 +129,27 @@ body {
 
     /* Asegura que el scroll vertical funcione correctamente dentro de flexbox */
     min-height: 0;
+    max-height: 70vh;
+    position: relative;
+}
+
+/* Infinite scrolling styles */
+.loading-indicator {
+    text-align: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    font-style: italic;
+}
+
+.table-info {
+    text-align: right;
+    padding: 8px;
+    font-size: 0.85em;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
 }
 
 #data-table {
@@ -155,6 +176,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 10;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
 }
 
 #data-table tbody tr:last-child td {
