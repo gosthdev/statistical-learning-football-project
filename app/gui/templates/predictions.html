@@ -74,6 +74,44 @@
         </div>
     </section>
 
+    <!-- Nueva sección para el análisis de predicciones -->
+    <section id="prediction-comparison-section" class="prediction-comparison-section" style="display: none;">
+        <h2>Prediction Analysis</h2>
+        <div class="table-container comparison-table-container">
+            <table class="data-table comparison-table">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Home</th>
+                        <th>Away</th>
+                        <th>Result</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Rounded</strong></td>
+                        <td id="rounded-home">-</td>
+                        <td id="rounded-away">-</td>
+                        <td id="rounded-result">-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>No Round</strong></td>
+                        <td id="noround-home">-</td>
+                        <td id="noround-away">-</td>
+                        <td id="noround-result">-</td>
+                    </tr>
+                    <!-- Add new row for actual result -->
+                    <tr>
+                        <td><strong>Actual</strong></td>
+                        <td id="actual-home">-</td>
+                        <td id="actual-away">-</td>
+                        <td id="actual-result">-</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
     <section class="test-dataset-section">
         <h2>Test Dataset Matchups</h2>
         <div class="table-container">

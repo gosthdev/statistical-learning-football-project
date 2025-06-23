@@ -295,3 +295,55 @@ h2 {
 .data-table tbody td:last-child {
     color: var(--text-secondary);
 }
+
+/* Prediction Comparison Table */
+.prediction-comparison-section {
+    margin-top: 32px;
+    margin-bottom: 32px;
+}
+
+.comparison-table-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.comparison-table th,
+.comparison-table td {
+    text-align: center;
+}
+
+.comparison-table th:first-child,
+.comparison-table td:first-child {
+    text-align: left;
+    background-color: var(--bg-placeholder);
+    width: 120px;
+}
+
+/* Highlight the result column */
+.comparison-table th:last-child,
+.comparison-table td:last-child {
+    font-weight: 500;
+}
+
+/* Styling for different results */
+.result-home-win {
+    color: #2c7be5;
+}
+
+.result-away-win {
+    color: #e63757;
+}
+
+.result-draw {
+    color: #39afd1;
+}
+
+/* Make the actual results row stand out */
+.comparison-table tr:last-child {
+    background-color: rgba(0, 0, 0, 0.05); /* Subtle background */
+    font-weight: 500; /* Slightly bolder */
+}
+
+.comparison-table tr:last-child strong {
+    color: var(--text-secondary);
+}

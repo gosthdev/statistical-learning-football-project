@@ -66,6 +66,9 @@ function initializePredictions() {
         awayPredictionResult.textContent = '...';
         homeActualResult.textContent = '...';
         awayActualResult.textContent = '...';
+        
+        // Hide comparison table while loading
+        document.getElementById('prediction-comparison-section').style.display = 'none';
 
         try {
             const result = await pywebview.api.get_prediction(homeTeam, awayTeam, formattedDate);
@@ -77,22 +80,105 @@ function initializePredictions() {
                 homeActualResult.textContent = '-';
                 awayActualResult.textContent = '-';
             } else {
-                // Actualizar los resultados de la predicción
+                // Update prediction results
                 homePredictionResult.textContent = result.predicted_home_goals.toFixed(2);
                 awayPredictionResult.textContent = result.predicted_away_goals.toFixed(2);
 
-                // Actualizar los resultados reales
+                // Update actual results
                 homeActualResult.textContent = result.actual_home_goals;
                 awayActualResult.textContent = result.actual_away_goals;
+                
+                // NEW: Update comparison table
+                updatePredictionComparisonTable(result);
             }
         } catch (e) {
             alert(`An API error occurred: ${e.message}`);
         } finally {
-            // Restaurar el botón
+            // Restore button
             predictBtn.disabled = false;
             predictBtn.textContent = 'Predict Goals';
         }
     });
+
+    // NEW: Add function to update the comparison table
+    function updatePredictionComparisonTable(result) {
+        // Get prediction values
+        const homeGoals = result.predicted_home_goals;
+        const awayGoals = result.predicted_away_goals;
+        
+        // Get actual values
+        const actualHomeGoals = result.actual_home_goals;
+        const actualAwayGoals = result.actual_away_goals;
+        
+        // Calculate rounded values using the specified rule
+        const roundedHomeGoals = Math.floor(homeGoals + 0.5);
+        const roundedAwayGoals = Math.floor(awayGoals + 0.5);
+        
+        // Determine match results for rounded values
+        let roundedResult = '';
+        if (roundedHomeGoals > roundedAwayGoals) {
+            roundedResult = 'home win';
+        } else if (roundedHomeGoals < roundedAwayGoals) {
+            roundedResult = 'away win';
+        } else {
+            roundedResult = 'draw';
+        }
+        
+        // Determine match results for non-rounded values
+        let noroundResult = '';
+        if (homeGoals > awayGoals) {
+            noroundResult = 'home win';
+        } else if (homeGoals < awayGoals) {
+            noroundResult = 'away win';
+        } else {
+            noroundResult = 'draw';
+        }
+        
+        // Determine actual match result
+        let actualResult = '';
+        if (actualHomeGoals > actualAwayGoals) {
+            actualResult = 'home win';
+        } else if (actualHomeGoals < actualAwayGoals) {
+            actualResult = 'away win';
+        } else {
+            actualResult = 'draw';
+        }
+        
+        // Update rounded results row
+        document.getElementById('rounded-home').textContent = roundedHomeGoals;
+        document.getElementById('rounded-away').textContent = roundedAwayGoals;
+        
+        const roundedResultCell = document.getElementById('rounded-result');
+        roundedResultCell.textContent = roundedResult;
+        roundedResultCell.className = getResultClass(roundedResult);
+        
+        // Update non-rounded results row
+        document.getElementById('noround-home').textContent = homeGoals.toFixed(2);
+        document.getElementById('noround-away').textContent = awayGoals.toFixed(2);
+        
+        const noroundResultCell = document.getElementById('noround-result');
+        noroundResultCell.textContent = noroundResult;
+        noroundResultCell.className = getResultClass(noroundResult);
+        
+        // Update actual results row
+        document.getElementById('actual-home').textContent = actualHomeGoals;
+        document.getElementById('actual-away').textContent = actualAwayGoals;
+        
+        const actualResultCell = document.getElementById('actual-result');
+        actualResultCell.textContent = actualResult;
+        actualResultCell.className = getResultClass(actualResult);
+        
+        // Show the comparison table section
+        document.getElementById('prediction-comparison-section').style.display = 'block';
+    }
+
+    // Helper function to get CSS class based on result
+    function getResultClass(result) {
+        if (result === 'home win') return 'result-home-win';
+        if (result === 'away win') return 'result-away-win';
+        if (result === 'draw') return 'result-draw';
+        return '';
+    }
 
     // --- CÓDIGO PARA LA TABLA DE DATOS DE PRUEBA (sin cambios) ---
     const tableHead = document.querySelector('#predictions-data-table thead');
