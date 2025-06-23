@@ -41,33 +41,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error loading default datasets:', error);
-            alert('Failed to load default datasets.');
         }
     });
     
     // Iniciar procesamiento de archivos
-    processBtn.addEventListener('click', async () => {
-        if (loadedFiles.length === 0) return;
+    processBtn.addEventListener('click', () => { // No longer async
+        if (loadedFiles.length === 0) {
+            return;
+        }
         processBtn.disabled = true;
         processBtn.textContent = 'Processing...';
         
-        try {
-            // Llama a la API. Python se encargará de la navegación.
-            // Ya no necesitamos hacer nada con la respuesta aquí.
-            await pywebview.api.process_files(loadedFiles);
-            
-            // El código aquí abajo probablemente no se ejecute porque
-            // Python cambiará la página, pero es una buena práctica
-            // manejar el caso en que no lo haga.
-            console.log("Processing call sent. Waiting for Python to navigate...");
-
-        } catch (error) {
-            // Si la API falla, sí necesitamos reactivar el botón y mostrar un error.
+        // KEY CHANGE: Use .then() for a non-blocking call.
+        // This fires the Python function and immediately continues, avoiding the race condition.
+        // Python will handle navigation on success. We only care about the result if it's an error.
+        pywebview.api.process_files(loadedFiles).then(result => {
+            // This block will only run if Python returns a value, which it now only does on error.
+            if (result && result.status === 'error') {
+                console.error("Processing failed:", result.message);
+                alert(`Processing failed: ${result.message}`);
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process Files';
+            }
+        }).catch(error => {
+            // This catches fundamental errors in the API call itself.
             console.error('Error calling process_files API:', error);
-            alert(`A critical error occurred: ${error.message || 'Could not connect to the backend.'}`);
+            alert('A critical error occurred while trying to process the files.');
             processBtn.disabled = false;
             processBtn.textContent = 'Process Files';
-        }
+        });
     });
 
     // --- LÓGICA DE DRAG & DROP ---

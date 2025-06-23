@@ -3,15 +3,14 @@ import shutil
 import json
 from core.data_manager import DataManager, DataType
 from core.model_trainer import model_instance
-# ¡NUEVO! Importamos los datos ya cargados en memoria
-from core.data_holder import PROCESSED_DATA_JSON, TEST_DATA_JSON
+# KEY CHANGE: Only import the module itself, not the variables from it.
+import core.data_holder
 
 class Api:
     def __init__(self):
         self.window = None
         self.default_data_path = os.path.join('data', 'default_datasets')
         self.raw_data_output_path = os.path.join('data', 'raw')
-        # Add cache for pagination
         self._processed_data_cache = None
 
     def set_window(self, window):
@@ -41,19 +40,13 @@ class Api:
         # --- 2. Preparar los datos si es necesario ---
         if has_uploaded_files:
             print("Processing mode: RAW (uploaded files found).")
-            # Filtrar solo los archivos subidos para escribirlos en disco
             files_to_write = [f for f in files_to_process if f.get('type') == 'uploaded' and f.get('content') is not None]
-
             if not files_to_write:
                 return {"status": "error", "message": "Uploaded files were found, but they have no content to save."}
-
-            # Asegurarse de que el directorio 'raw' exista
             try:
                 os.makedirs(self.raw_data_output_path, exist_ok=True)
             except OSError as e:
                 return {"status": "error", "message": f"Could not create destination directory: {e}"}
-
-            # Escribir los archivos en 'data/raw'
             for detail in files_to_write:
                 dest_path = os.path.join(self.raw_data_output_path, detail['name'])
                 try:
@@ -63,13 +56,9 @@ class Api:
                 except Exception as e:
                     print(f"Error writing content for '{detail['name']}': {e}")
                     return {"status": "error", "message": f"Failed to write file {detail['name']}: {e}"}
-            
-            # Si todo salió bien, establecer el tipo para el DataManager
             data_manager_type = DataType.RAW
-
         elif has_default_files:
             print("Processing mode: DEFAULT (no uploaded files, default files selected).")
-            # No se necesita escribir archivos, solo establecer el tipo
             data_manager_type = DataType.DEFAULT
         
         # --- 3. Ejecutar el DataManager si se determinó un modo ---
@@ -78,16 +67,23 @@ class Api:
                 print(f"Initializing DataManager with type: {data_manager_type.name}")
                 data_manager = DataManager(data_type=data_manager_type)
                 data_manager.process_data()
-                saved_path = data_manager.save_data()
+                data_manager.save_data()
+                
+                print("Reloading data into data_holder after processing...")
+                data_loader_for_update = DataManager()
+                
+                # KEY CHANGE: Modify the variable through the module's namespace.
+                core.data_holder.PROCESSED_DATA_JSON = data_loader_for_update.get_data_as_json()
+                
+                print('data_holder.PROCESSED_DATA_JSON updated.')
+                self._processed_data_cache = None 
+                print("API cache reset.")
                 
                 if self.window:
                     print(f"Data processed. Navigating to layout.html...")
                     self.window.load_url('layout.html')
+                return
 
-                return {
-                    "status": "success", 
-                    "message": f"Data processed from '{data_manager_type.name}' source. Processed file saved to: {saved_path}"
-                }
             except Exception as e:
                 print(f"An error occurred during data processing: {e}")
                 return {"status": "error", "message": f"Data processing failed: {e}"}
@@ -95,35 +91,26 @@ class Api:
             return {"status": "info", "message": "No files were selected for processing."}
         
     def get_data(self):
-        """
-        Envía solo el primer lote de datos y guarda el resto en caché.
-        """
         try:
             print("API: get_data() called. Pushing pre-loaded data to dashboard.")
             if self.window:
-                try:
-                    # Parse JSON once and cache for future paging requests
-                    if self._processed_data_cache is None:
-                        self._processed_data_cache = json.loads(PROCESSED_DATA_JSON)
-                    
-                    data = self._processed_data_cache
-                    
-                    if isinstance(data, list):
-                        # Only send first 100 rows initially
-                        batch_size = 100
-                        initial_batch = data[:batch_size]
-                        initial_batch_json = json.dumps(initial_batch)
-                        
-                        total_count = len(data)
-                        print(f"Sending first {len(initial_batch)} rows of {total_count} total records")
-                        
-                        self.window.evaluate_js(f'renderDashboardData({initial_batch_json}, {total_count})')
-                    else:
-                        # If not a list, send as is
-                        self.window.evaluate_js(f'renderDashboardData({PROCESSED_DATA_JSON})')
-                except json.JSONDecodeError:
-                    # If invalid JSON, send as is
-                    self.window.evaluate_js(f'renderDashboardData({PROCESSED_DATA_JSON})')
+                # KEY CHANGE: Always read the variable from the module's namespace.
+                data_json = core.data_holder.PROCESSED_DATA_JSON
+                
+                if self._processed_data_cache is None:
+                    self._processed_data_cache = json.loads(data_json)
+                
+                data = self._processed_data_cache
+                
+                if isinstance(data, list):
+                    batch_size = 100
+                    initial_batch = data[:batch_size]
+                    initial_batch_json = json.dumps(initial_batch)
+                    total_count = len(data)
+                    print(f"Sending first {len(initial_batch)} rows of {total_count} total records")
+                    self.window.evaluate_js(f'renderDashboardData({initial_batch_json}, {total_count})')
+                else:
+                    self.window.evaluate_js(f'renderDashboardData({data_json})')
         except Exception as e:
             print(f"API Error in get_data: {e}")
             if self.window:
@@ -131,15 +118,12 @@ class Api:
                 self.window.evaluate_js(f'renderDashboardError({error_message})')
 
     def get_more_data(self, start_index, batch_size):
-        """
-        Returns the next batch of rows for infinite scrolling
-        """
         try:
             print(f"API: get_more_data() called. Requesting rows {start_index} to {start_index + batch_size}")
             
-            # If cache not initialized, do it now
             if self._processed_data_cache is None:
-                self._processed_data_cache = json.loads(PROCESSED_DATA_JSON)
+                # KEY CHANGE: Read from the module's namespace.
+                self._processed_data_cache = json.loads(core.data_holder.PROCESSED_DATA_JSON)
                 
             data = self._processed_data_cache
             
@@ -157,14 +141,11 @@ class Api:
             return []
     
     def get_test_data(self):
-        """
-        SUPER RÁPIDO: Ya no lee del disco. Solo devuelve el JSON precargado.
-        """
         try:
             print("API: get_test_data() called. Pushing pre-loaded test data to predictions view.")
             if self.window:
-                # Usa directamente la variable importada
-                self.window.evaluate_js(f'renderPredictionsTable({TEST_DATA_JSON})')
+                # KEY CHANGE: Read from the module's namespace.
+                self.window.evaluate_js(f'renderPredictionsTable({core.data_holder.TEST_DATA_JSON})')
         except Exception as e:
             print(f"API Error in get_test_data: {e}")
             if self.window:
@@ -172,20 +153,12 @@ class Api:
                 self.window.evaluate_js(f'renderPredictionsError({error_message})')
 
     def get_prediction(self, home_team: str, away_team: str, date: str):
-        """
-        Endpoint de la API para obtener una predicción para un partido específico.
-        """
-        # ¡CAMBIADO! Usamos la instancia global importada desde model_trainer.
         if not model_instance:
             return {"error": "Prediction model is not available."}
-
         try:
-            # ¡CAMBIADO! Usamos la instancia global importada.
             pred_h, pred_a, real_h, real_a = model_instance.predict(home_team, away_team, date)
-
             if pred_h is None:
                 return {"error": f"Match not found for {home_team} vs {away_team} on {date} in the test dataset."}
-
             result = {
                 "predicted_home_goals": float(pred_h),
                 "predicted_away_goals": float(pred_a),
@@ -193,7 +166,6 @@ class Api:
                 "actual_away_goals": int(real_a)
             }
             return result
-
         except Exception as e:
             print(f"API Error in get_prediction: {e}")
             return {"error": "An unexpected error occurred during prediction."}
