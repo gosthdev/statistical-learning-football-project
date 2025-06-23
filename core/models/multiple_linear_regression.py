@@ -9,9 +9,9 @@ from ..config import FEATURES_COLUMNS, N_SPLITS, HOME_TARGET, AWAY_TARGET
 from .base_model import BaseModel
 
 class MultipleLinearRegressionModel(BaseModel):
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self):
         super().__init__()
-        self.df = df.dropna()
+        self.df = None
 
         self.X = None
         self.y_home = None
@@ -48,6 +48,7 @@ class MultipleLinearRegressionModel(BaseModel):
         self.test_path = os.path.join(project_root, 'data', 'test', 'multiple_linear_regression_test.csv')
 
     def train(self):
+        self.df = self.df.dropna()
         self.X = self.df[FEATURES_COLUMNS]
         self.y_home = self.df[HOME_TARGET]
         self.y_away = self.df[AWAY_TARGET]
@@ -130,7 +131,7 @@ class MultipleLinearRegressionModel(BaseModel):
 
         # --- 2. Encontrar el partido específico en el dataset de prueba ---
         try:
-            match_date = pd.to_datetime(date, format='%d/%m/%Y')
+            match_date = pd.to_datetime(date, format='%d/%m/%y')
             
             # 'HomeTeam', 'AwayTeam', y 'Date' son columnas estructurales básicas.
             match_record = self.df_test[
@@ -165,4 +166,4 @@ class MultipleLinearRegressionModel(BaseModel):
 
         # --- 6. Devolver la tupla completa ---
         return pred_h, pred_a, real_h, real_a
-    
+

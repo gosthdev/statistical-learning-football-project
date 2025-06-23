@@ -1,12 +1,17 @@
 import os
 import shutil
+import json
 from core.data_manager import DataManager, DataType
+from core.model_trainer import model_instance
+# ¡NUEVO! Importamos los datos ya cargados en memoria
+from core.data_holder import PROCESSED_DATA_JSON, TEST_DATA_JSON
 
 class Api:
     def __init__(self):
         self.window = None
         self.default_data_path = os.path.join('data', 'default_datasets')
         self.raw_data_output_path = os.path.join('data', 'raw')
+
 
     def set_window(self, window):
         self.window = window
@@ -72,15 +77,12 @@ class Api:
                 print(f"Initializing DataManager with type: {data_manager_type.name}")
                 data_manager = DataManager(data_type=data_manager_type)
                 data_manager.process_data()
-                saved_path = data_manager.save_data() # Guardamos la ruta para el mensaje
+                saved_path = data_manager.save_data()
                 
-                # --- ¡AQUÍ ESTÁ LA MAGIA! ---
-                # Después de procesar y guardar, le decimos a la ventana que navegue.
                 if self.window:
                     print(f"Data processed. Navigating to layout.html...")
                     self.window.load_url('layout.html')
 
-                # Devolvemos el mensaje de éxito. La navegación ocurrirá casi al mismo tiempo.
                 return {
                     "status": "success", 
                     "message": f"Data processed from '{data_manager_type.name}' source. Processed file saved to: {saved_path}"
@@ -89,11 +91,64 @@ class Api:
                 print(f"An error occurred during data processing: {e}")
                 return {"status": "error", "message": f"Data processing failed: {e}"}
         else:
-            # Este caso se da si la lista está vacía o no contiene tipos válidos
             return {"status": "info", "message": "No files were selected for processing."}
         
     def get_data(self):
-        data_loader = DataManager(data_type=DataType.RAW)
-        return data_loader.get_data_as_json()
+        """
+        SUPER RÁPIDO: Ya no lee del disco. Solo devuelve el JSON precargado.
+        """
+        try:
+            print("API: get_data() called. Pushing pre-loaded data to dashboard.")
+            if self.window:
+                # Usa directamente la variable importada
+                self.window.evaluate_js(f'renderDashboardData({PROCESSED_DATA_JSON})')
+        except Exception as e:
+            print(f"API Error in get_data: {e}")
+            if self.window:
+                error_message = json.dumps(f"Error fetching data: {e}")
+                self.window.evaluate_js(f'renderDashboardError({error_message})')
+    
+    def get_test_data(self):
+        """
+        SUPER RÁPIDO: Ya no lee del disco. Solo devuelve el JSON precargado.
+        """
+        try:
+            print("API: get_test_data() called. Pushing pre-loaded test data to predictions view.")
+            if self.window:
+                # Usa directamente la variable importada
+                self.window.evaluate_js(f'renderPredictionsTable({TEST_DATA_JSON})')
+        except Exception as e:
+            print(f"API Error in get_test_data: {e}")
+            if self.window:
+                error_message = json.dumps(f"Error fetching test data: {e}")
+                self.window.evaluate_js(f'renderPredictionsError({error_message})')
+
+    def get_prediction(self, home_team: str, away_team: str, date: str):
+        """
+        Endpoint de la API para obtener una predicción para un partido específico.
+        """
+        # ¡CAMBIADO! Usamos la instancia global importada desde model_trainer.
+        if not model_instance:
+            return {"error": "Prediction model is not available."}
+
+        try:
+            # ¡CAMBIADO! Usamos la instancia global importada.
+            pred_h, pred_a, real_h, real_a = model_instance.predict(home_team, away_team, date)
+
+            if pred_h is None:
+                return {"error": f"Match not found for {home_team} vs {away_team} on {date} in the test dataset."}
+
+            result = {
+                "predicted_home_goals": float(pred_h),
+                "predicted_away_goals": float(pred_a),
+                "actual_home_goals": int(real_h),
+                "actual_away_goals": int(real_a)
+            }
+            return result
+
+        except Exception as e:
+            print(f"API Error in get_prediction: {e}")
+            return {"error": "An unexpected error occurred during prediction."}
+
     def check_processed_data(self):
         return DataManager().check_file_exists()

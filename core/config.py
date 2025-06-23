@@ -1,6 +1,7 @@
 HOME_TARGET = 'FTHG'
 AWAY_TARGET = 'FTAG'
 N = 5
+RESULT_COLUMN = 'FTR' 
 ESSENTIAL_COLUMNS = ['Date', 'HomeTeam', 'AwayTeam', 'FTHG', 'FTAG', 'FTR', 'HS', 'AS', 'HC', 'AC']
 STREAK_COLUMNS = ['H_WinStreak', 'A_WinStreak']
 AVG_GOALS_COLUMNS = ['H_AvgGoals', 'H_AvgGoalsAgainst', 'A_AvgGoals', 'A_AvgGoalsAgainst']

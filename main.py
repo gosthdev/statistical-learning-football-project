@@ -2,8 +2,13 @@ import os
 import webview
 from app.api import Api
 from core.data_manager import DataManager # Importa DataManager
+from core.models.multiple_linear_regression import MultipleLinearRegressionModel
+import pandas as pd
+# ¡NUEVO! Importa el data_holder para ejecutar la precarga de datos
+import core.data_holder
 
 if __name__ == '__main__':
+
     api = Api()
     gui_dir = os.path.join('app', 'gui', 'templates')
 
@@ -28,3 +33,15 @@ if __name__ == '__main__':
     )
     api.set_window(window)
     webview.start(debug=False)
+
+
+    # df = pd.read_csv('/home/eddu/upao/statistical-learning-football-project/data/processed/2025-06-22_15-29-16.csv')
+    # model = MultipleLinearRegressionModel(df)
+    # # model.train()
+    # # model.save()
+    # model.load_models()
+    # model.load_test_data()
+    # print(model.predict("Eibar", "Betis", "13/05/2021"))
+
+    # # --- INICIALIZACIÓN DE LA APLICACIÓN ---
+    # exit()
