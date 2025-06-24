@@ -44,6 +44,4 @@ if __name__ == '__main__':
     # Register window close handler
     window.events.closed += lambda: (cleanup())
 
-    api.set_window(window)
-
     webview.start(debug=False)

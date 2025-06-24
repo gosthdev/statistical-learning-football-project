@@ -1,6 +1,7 @@
 import os
 import shutil
 import json
+import webview
 from core.data_manager import DataManager, DataType
 from core.models.multiple_linear_regression import MultipleLinearRegressionModel
 import core.model_trainer
@@ -8,13 +9,12 @@ import core.data_holder
 
 class Api:
     def __init__(self):
-        self.window = None
         self.default_data_path = os.path.join('data', 'default_datasets')
         self.raw_data_output_path = os.path.join('data', 'raw')
         self._processed_data_cache = None
 
     def set_window(self, window):
-        self.window = window
+        pass
 
     def load_default_datasets(self):
         try:
@@ -82,10 +82,10 @@ class Api:
                 
                 self._processed_data_cache = None 
                 
-                if self.window:
-                    self.window.load_url('layout.html')
+                if webview.windows:
+                    webview.windows[0].load_url('layout.html')
                 return
-
+                
             except Exception as e:
                 print(f"An error occurred during data processing: {e}")
                 return {"status": "error", "message": f"Data processing failed: {e}"}
@@ -95,7 +95,7 @@ class Api:
     def get_data(self):
         try:
             print("API: get_data() called. Pushing pre-loaded data to dashboard.")
-            if self.window:
+            if webview.windows:
                 # KEY CHANGE: Always read the variable from the module's namespace.
                 data_json = core.data_holder.PROCESSED_DATA_JSON
                 
@@ -110,14 +110,14 @@ class Api:
                     initial_batch_json = json.dumps(initial_batch)
                     total_count = len(data)
                     print(f"Sending first {len(initial_batch)} rows of {total_count} total records")
-                    self.window.evaluate_js(f'renderDashboardData({initial_batch_json}, {total_count})')
+                    webview.windows[0].evaluate_js(f'renderDashboardData({initial_batch_json}, {total_count})')
                 else:
-                    self.window.evaluate_js(f'renderDashboardData({data_json})')
+                    webview.windows[0].evaluate_js(f'renderDashboardData({data_json})')
         except Exception as e:
             print(f"API Error in get_data: {e}")
-            if self.window:
+            if webview.windows:
                 error_message = json.dumps(f"Error fetching data: {e}")
-                self.window.evaluate_js(f'renderDashboardError({error_message})')
+                webview.windows[0].evaluate_js(f'renderDashboardError({error_message})')
 
     def get_more_data(self, start_index, batch_size):
         try:
@@ -145,14 +145,14 @@ class Api:
     def get_test_data(self):
         try:
             print("API: get_test_data() called. Pushing pre-loaded test data to predictions view.")
-            if self.window:
-                self.window.evaluate_js(f'renderPredictionsTable({core.data_holder.TEST_DATA_JSON})')
+            if webview.windows:
+                webview.windows[0].evaluate_js(f'renderPredictionsTable({core.data_holder.TEST_DATA_JSON})')
         except Exception as e:
             print(f"API Error in get_test_data: {e}")
-            if self.window:
+            if webview.windows:
                 error_message = json.dumps(f"Error fetching test data: {e}")
-                self.window.evaluate_js(f'renderPredictionsError({error_message})')
-
+                webview.windows[0].evaluate_js(f'renderPredictionsError({error_message})')
+    
     def get_prediction(self, home_team: str, away_team: str, date: str):
         # --- KEY CHANGE ---
         # Use the global instance from the module.
