@@ -12,7 +12,6 @@ import pandas as pd
 import gc  # Garbage collection
 from app.api import Api
 from core.data_manager import DataManager
-from core.performance_monitor import PerformanceMonitor
 import core.data_holder
 
 
