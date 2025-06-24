@@ -32,12 +32,16 @@
                 </select>
             </div>
         </div>
-        <div class="date-picker-wrapper">
-            <label for="match-date-input">Match Date</label>
-            <input type="date" id="match-date-input">
-        </div>
-        <div class="predict-button-wrapper">
-            <button class="predict-button">Predict Goals</button>
+
+        <!-- NUEVO CONTENEDOR PARA LA FILA DE CONTROLES -->
+        <div class="prediction-controls-row">
+            <div class="date-picker-wrapper">
+                <label for="match-date-input">Match Date</label>
+                <input type="date" id="match-date-input">
+            </div>
+            <div class="predict-button-wrapper">
+                <button class="predict-button">Predict Goals</button>
+            </div>
         </div>
     </section>
 
@@ -55,21 +59,67 @@
         </div>
     </section>
 
-    <section class="test-dataset-section">
-        <h2>Test Dataset Matchups</h2>
-        <div class="table-container">
-            <table class="data-table">
+    <!-- NUEVA SECCIÓN PARA RESULTADOS REALES -->
+    <section class="actual-results-section">
+        <h2>Actual Results</h2>
+        <div class="results-grid">
+            <div class="result-card actual-result-card">
+                <p>Home Team Actual Goals</p>
+                <span id="home-actual-result">-</span>
+            </div>
+            <div class="result-card actual-result-card">
+                <p>Away Team Actual Goals</p>
+                <span id="away-actual-result">-</span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Nueva sección para el análisis de predicciones -->
+    <section id="prediction-comparison-section" class="prediction-comparison-section" style="display: none;">
+        <h2>Prediction Analysis</h2>
+        <div class="table-container comparison-table-container">
+            <table class="data-table comparison-table">
                 <thead>
                     <tr>
-                        <th>Home Team</th>
-                        <th>Away Team</th>
-                        <th>Date</th>
+                        <th></th>
+                        <th>Home</th>
+                        <th>Away</th>
+                        <th>Result</th>
                     </tr>
                 </thead>
-                <tbody id="test-matchups-body">
-                    <!-- Los datos de prueba se cargarán aquí -->
+                <tbody>
+                    <tr>
+                        <td><strong>Rounded</strong></td>
+                        <td id="rounded-home">-</td>
+                        <td id="rounded-away">-</td>
+                        <td id="rounded-result">-</td>
+                    </tr>
+                    <tr>
+                        <td><strong>No Round</strong></td>
+                        <td id="noround-home">-</td>
+                        <td id="noround-away">-</td>
+                        <td id="noround-result">-</td>
+                    </tr>
+                    <!-- Add new row for actual result -->
+                    <tr>
+                        <td><strong>Actual</strong></td>
+                        <td id="actual-home">-</td>
+                        <td id="actual-away">-</td>
+                        <td id="actual-result">-</td>
+                    </tr>
                 </tbody>
             </table>
         </div>
+    </section>
+
+    <section class="test-dataset-section">
+        <h2>Test Dataset Matchups</h2>
+        <div class="table-container">
+            <table id="predictions-data-table" class="data-table">
+                <thead></thead>
+                <tbody id="test-matchups-body"></tbody>
+            </table>
+        </div>
+        <div id="predictions-loading-message" class="loading-message">Loading test data...</div>
     </section>
 </div>

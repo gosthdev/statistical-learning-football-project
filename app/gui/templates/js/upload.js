@@ -41,53 +41,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error('Error loading default datasets:', error);
-            alert('Failed to load default datasets.');
         }
     });
     
     // Iniciar procesamiento de archivos
-    processBtn.addEventListener('click', async () => {
-        if (loadedFiles.length === 0) return;
-        // Deshabilita el botón para evitar clics múltiples
+    processBtn.addEventListener('click', () => { // No longer async
+        if (loadedFiles.length === 0) {
+            return;
+        }
         processBtn.disabled = true;
         processBtn.textContent = 'Processing...';
         
-        try {
-            // Llama a la API de Python para que procese los archivos
-            // Corrected from window.webview.api to pywebview.api
-            const response = await pywebview.api.process_files(loadedFiles); 
-            
-            // Handle the response from Python
-            if (response) {
-                console.log('Processing response:', response); // Log the full response
-                alert(response.message); // Show the message from the Python backend
-
-                if (response.status === "success" || response.status === "partial_success") {
-                    // Optionally, clear the file list or navigate
-                    // loadedFiles = []; // Clear list after successful processing
-                    // updateFileListUI();
-                    // console.log("Files processed, navigating to dashboard (if implemented).");
-                    // window.location.href = 'dashboard.html'; // If you have a dashboard page
-                } else if (response.status === "error") {
-                    console.error('Error reported from Python API:', response.message);
-                    if (response.failures && response.failures.length > 0) {
-                        console.error('Failed files:', response.failures);
-                        // You could display these specific failures to the user
-                    }
-                }
-            } else {
-                console.error('No response received from process_files API call.');
-                alert('An unexpected error occurred: No response from server.');
+        // KEY CHANGE: Use .then() for a non-blocking call.
+        // This fires the Python function and immediately continues, avoiding the race condition.
+        // Python will handle navigation on success. We only care about the result if it's an error.
+        pywebview.api.process_files(loadedFiles).then(result => {
+            // This block will only run if Python returns a value, which it now only does on error.
+            if (result && result.status === 'error') {
+                console.error("Processing failed:", result.message);
+                alert(`Processing failed: ${result.message}`);
+                processBtn.disabled = false;
+                processBtn.textContent = 'Process Files';
             }
-
-        } catch (error) {
+        }).catch(error => {
+            // This catches fundamental errors in the API call itself.
             console.error('Error calling process_files API:', error);
-            alert(`An error occurred while processing files: ${error.message || error}`);
-        } finally {
-            // Reactiva el botón
+            alert('A critical error occurred while trying to process the files.');
             processBtn.disabled = false;
             processBtn.textContent = 'Process Files';
-        }
+        });
     });
 
     // --- LÓGICA DE DRAG & DROP ---
