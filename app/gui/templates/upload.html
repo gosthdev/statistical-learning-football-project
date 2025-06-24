@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cargar Datos Históricos</title>
+    <link rel="stylesheet" href="./css/upload.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Upload Historical Data</h1>
+            <p>Upload your historical match data in CSV format. The system will automatically validate the file format
+                and data structure.</p>
+        </header>
+
+        <main>
+            <div id="drop-zone">
+                <p>Drag and drop your file here</p>
+                <p class="formats">Supported formats: CSV</p>
+                <input type="file" id="file-input" hidden multiple accept=".csv">
+                <button id="browse-btn" class="btn">Browse Files</button>
+            </div>
+
+            <div class="separator">or</div>
+
+            <button id="load-default-btn" class="btn btn-secondary">Use Default Datasets</button>
+
+            <div id="file-list-container" class="hidden">
+                <h3>Files to Process:</h3>
+                <ul id="file-list"></ul>
+                <button id="process-btn" class="btn btn-process" disabled>Process Files</button>
+            </div>
+        </main>
+
+        <footer>
+            <p class="terms">By uploading, you agree to our terms of service and privacy policy.</p>
+        </footer>
+    </div>
+
+    <script src="./js/upload.js"></script>
+</body>
+
+</html>

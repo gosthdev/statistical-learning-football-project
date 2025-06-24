@@ -1,0 +1,229 @@
+/* --- Estilos Globales y Resets --- */
+:root {
+    --sidebar-width: 250px;
+    --primary-text-color: #212529;
+    --secondary-text-color: #6c757d;
+    --background-color: #f8f9fa;
+    --surface-color: #ffffff;
+    --border-color: #dee2e6;
+    --hover-color: #f1f3f5;
+    --active-color: #e9ecef;
+    --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--background-color);
+    color: var(--primary-text-color);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+    font-size: 16px;
+    overflow: hidden;
+    /* 1. Evita que toda la página se desplace */
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* --- Estructura Principal de la Aplicación --- */
+.app-container {
+    display: flex;
+    height: 100vh;
+    /* 2. Fija la altura del contenedor a la de la ventana */
+}
+
+/* --- Barra Lateral (Sidebar) --- */
+.sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    /* Evita que la barra lateral se encoja */
+    background-color: var(--surface-color);
+    border-right: 1px solid var(--border-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-title {
+    font-size: 22px;
+    margin: 0 0 32px 0;
+    padding: 0 16px;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-nav .nav-item {
+    display: flex;
+    /* Changed from block */
+    align-items: center;
+    /* Vertically align icon and text */
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--primary-text-color);
+    font-weight: 500;
+    margin-bottom: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-nav .nav-item .nav-icon {
+    width: 20px;
+    /* Set a fixed width for the icon */
+    height: 20px;
+    /* Set a fixed height for the icon */
+    margin-right: 12px;
+    /* Add space between the icon and the text */
+    opacity: 0.7;
+    /* Slightly mute the icon color */
+    transition: opacity 0.2s ease;
+}
+
+.sidebar-nav .nav-item:hover .nav-icon,
+.sidebar-nav .nav-item.active .nav-icon {
+    opacity: 1;
+    /* Make icon fully visible on hover/active */
+}
+
+.sidebar-nav .nav-item:hover {
+    background-color: var(--hover-color);
+}
+
+.sidebar-nav .nav-item.active {
+    background-color: var(--active-color);
+    font-weight: 600;
+}
+
+
+/* --- Área de Contenido Principal --- */
+.main-content {
+    flex-grow: 1;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+
+    /* NUEVO Y CRUCIAL: Permite que esta área se encoja y contenga a sus hijos anchos */
+    min-width: 0;
+}
+
+/* AÑADIR ESTA REGLA FALTANTE */
+.view-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    /* Add this to ensure the container fills available height */
+    min-height: 0;
+}
+
+/* Mensaje de bienvenida inicial */
+.welcome-message {
+    text-align: center;
+    margin-top: 20vh;
+    color: var(--secondary-text-color);
+}
+
+.main-content header h2 {
+    font-size: 28px;
+    margin: 0 0 8px 0;
+}
+
+.main-content header p {
+    color: var(--secondary-text-color);
+    font-size: 18px;
+    margin-bottom: 20px;
+    /* Reduced from 32px */
+}
+
+/* --- Estilos para la Tabla del Dashboard --- */
+
+#table-container {
+    background-color: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: auto;
+
+    /* Increase height to fill more space */
+    flex-grow: 1;
+    min-height: 0;
+
+    /* Replace max-height with a more flexible approach */
+    max-height: 80vh;
+    /* Increased from 70vh to use more vertical space */
+
+    /* Add bottom margin to match other sides */
+    margin-bottom: 32px;
+
+    /* Ensure proper positioning for loading indicator */
+    position: relative;
+}
+
+/* Infinite scrolling styles */
+.loading-indicator {
+    text-align: center;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 0;
+    /* Ensure no extra margin */
+}
+
+.table-info {
+    text-align: right;
+    padding: 8px;
+    font-size: 0.85em;
+    color: #6c757d;
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    margin-bottom: 0;
+    /* Ensure no extra margin below */
+}
+
+#data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#data-table th,
+#data-table td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    /* Evita que el texto de las celdas se parta en varias líneas, forzando el scroll */
+    white-space: nowrap;
+}
+
+#data-table thead th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    /* Fija el encabezado al hacer scroll vertical en el contenido principal */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+
+#data-table tbody tr:last-child td {
+    border-bottom: none;
+    /* Elimina la última línea de borde para un look más limpio */
+}
+
+#data-table tbody tr:hover {
+    background-color: var(--hover-color);
+}
+
+#loading-message {
+    padding: 40px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--secondary-text-color);
+}
