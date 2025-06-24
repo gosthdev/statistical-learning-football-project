@@ -34,8 +34,10 @@ class MultipleLinearRegressionModel(BaseModel):
         # paths
         project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
         self.models_dir = os.path.join(project_root, 'data', 'models')
+        self.test_dir = os.path.join(project_root, 'data', 'test')
+
         os.makedirs(self.models_dir, exist_ok=True)
-        
+        os.makedirs(self.test_dir, exist_ok=True)
         # models 
         self.model_home = None
         self.model_away = None
@@ -45,9 +47,10 @@ class MultipleLinearRegressionModel(BaseModel):
         self.home_model_path = os.path.join(self.models_dir, f'home_model_{date}.pkl')
         self.away_model_path = os.path.join(self.models_dir, f'away_model_{date}.pkl')
 
-        self.test_path = os.path.join(project_root, 'data', 'test', 'multiple_linear_regression_test.csv')
+        self.test_path = os.path.join(self.test_dir, 'multiple_linear_regression_test.csv')
 
-    def train(self):
+    def train(self, df: pd.DataFrame):
+        self.df = df
         self.df = self.df.dropna()
         self.X = self.df[FEATURES_COLUMNS]
         self.y_home = self.df[HOME_TARGET]
@@ -56,6 +59,11 @@ class MultipleLinearRegressionModel(BaseModel):
         tscv_final = TimeSeriesSplit(n_splits=N_SPLITS)
         # Get the last train/test split directly
         train_index, self.test_index = list(tscv_final.split(self.X))[-1]
+        
+        # --- KEY CHANGE ---
+        # After splitting, immediately assign the test dataframe to the instance attribute.
+        # We use .copy() to prevent potential warnings from pandas later.
+        self.df_test = self.df.iloc[self.test_index].copy()
         
         # Training
         self.X_train_final = self.X.iloc[train_index]
@@ -77,9 +85,15 @@ class MultipleLinearRegressionModel(BaseModel):
             joblib.dump(self.model_home, self.home_model_path)
         if self.model_away:
             joblib.dump(self.model_away, self.away_model_path)
-        self.df.iloc[self.test_index].to_csv(self.test_path, index=False)
-        print("Models saved successfully.")
-        print(f"Test data saved to {self.test_path}")
+        
+        # --- KEY CHANGE ---
+        # Now we save the dataframe that is already an attribute of the class.
+        if self.df_test is not None:
+            self.df_test.to_csv(self.test_path, index=False)
+            print("Models saved successfully.")
+            print(f"Test data saved to {self.test_path}")
+        else:
+            print("Models saved, but test data was not available to save.")
     
     def load_models(self):
         print(f"Searching for latest models in {self.models_dir}")

@@ -2,8 +2,8 @@ import os
 import shutil
 import json
 from core.data_manager import DataManager, DataType
-from core.model_trainer import model_instance
-# KEY CHANGE: Only import the module itself, not the variables from it.
+from core.models.multiple_linear_regression import MultipleLinearRegressionModel
+import core.model_trainer
 import core.data_holder
 
 class Api:
@@ -19,12 +19,10 @@ class Api:
     def load_default_datasets(self):
         try:
             if not os.path.isdir(self.default_data_path):
-                print(f"Error: Default dataset directory not found at '{self.default_data_path}'.")
                 return []
             files = [f for f in os.listdir(self.default_data_path) if f.endswith('.csv')]
             return files
         except Exception as e:
-            print(f"Error listing default datasets: {e}")
             return []
 
     def process_files(self, files_to_process):
@@ -64,23 +62,27 @@ class Api:
         # --- 3. Ejecutar el DataManager si se determinó un modo ---
         if data_manager_type:
             try:
-                print(f"Initializing DataManager with type: {data_manager_type.name}")
                 data_manager = DataManager(data_type=data_manager_type)
                 data_manager.process_data()
                 data_manager.save_data()
+
+                # --- TRAIN AND SAVE THE MODEL ---
+                model = MultipleLinearRegressionModel()
+                model.train(data_manager.data) 
+                model.save()
+
+                # --- UPDATE ALL IN-MEMORY DATA ---
+                data_loader = DataManager()
+                core.data_holder.PROCESSED_DATA_JSON = data_loader.get_data_as_json()
+                core.data_holder.TEST_DATA_JSON = data_loader.get_data_as_json(DataType.TEST)
                 
-                print("Reloading data into data_holder after processing...")
-                data_loader_for_update = DataManager()
+                # --- KEY CHANGE ---
+                # Replace the global model instance with our newly trained one.
+                core.model_trainer.model_instance = model
                 
-                # KEY CHANGE: Modify the variable through the module's namespace.
-                core.data_holder.PROCESSED_DATA_JSON = data_loader_for_update.get_data_as_json()
-                
-                print('data_holder.PROCESSED_DATA_JSON updated.')
                 self._processed_data_cache = None 
-                print("API cache reset.")
                 
                 if self.window:
-                    print(f"Data processed. Navigating to layout.html...")
                     self.window.load_url('layout.html')
                 return
 
@@ -144,7 +146,6 @@ class Api:
         try:
             print("API: get_test_data() called. Pushing pre-loaded test data to predictions view.")
             if self.window:
-                # KEY CHANGE: Read from the module's namespace.
                 self.window.evaluate_js(f'renderPredictionsTable({core.data_holder.TEST_DATA_JSON})')
         except Exception as e:
             print(f"API Error in get_test_data: {e}")
@@ -153,10 +154,13 @@ class Api:
                 self.window.evaluate_js(f'renderPredictionsError({error_message})')
 
     def get_prediction(self, home_team: str, away_team: str, date: str):
-        if not model_instance:
+        # --- KEY CHANGE ---
+        # Use the global instance from the module.
+        if not core.model_trainer.model_instance:
             return {"error": "Prediction model is not available."}
         try:
-            pred_h, pred_a, real_h, real_a = model_instance.predict(home_team, away_team, date)
+            # Use the global instance from the module.
+            pred_h, pred_a, real_h, real_a = core.model_trainer.model_instance.predict(home_team, away_team, date)
             if pred_h is None:
                 return {"error": f"Match not found for {home_team} vs {away_team} on {date} in the test dataset."}
             result = {
