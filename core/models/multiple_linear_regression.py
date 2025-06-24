@@ -134,7 +134,6 @@ class MultipleLinearRegressionModel(BaseModel):
         Returns:
             tuple: (pred_h, pred_a, real_h, real_a) | (None, None, None, None)
         """
-        # --- 1. Validaciones iniciales ---
         if self.model_home is None or self.model_away is None:
             print("Error: Los modelos no están cargados. Ejecuta train_model() primero.")
             return None, None, None, None
@@ -143,11 +142,9 @@ class MultipleLinearRegressionModel(BaseModel):
             print("Error: El dataset de prueba (df_test) no está cargado. Ejecuta load_test_data() primero.")
             return None, None, None, None
 
-        # --- 2. Encontrar el partido específico en el dataset de prueba ---
         try:
             match_date = pd.to_datetime(date, format='%d/%m/%y')
             
-            # 'HomeTeam', 'AwayTeam', y 'Date' son columnas estructurales básicas.
             match_record = self.df_test[
                 (self.df_test['HomeTeam'] == home_team) &
                 (self.df_test['AwayTeam'] == away_team) &
@@ -162,22 +159,16 @@ class MultipleLinearRegressionModel(BaseModel):
             print(f"Error al buscar el partido en el dataset de prueba: {e}")
             return None, None, None, None
 
-        # --- 3. Preparar los datos para la predicción ---
-        # Se asume que self.feature_columns se ha poblado usando FEATURES_COLUMNS de config.py
         input_data = match_record[FEATURES_COLUMNS]
 
-        # --- 4. Realizar la predicción ---
         pred_h = self.model_home.predict(input_data)[0]
         pred_a = self.model_away.predict(input_data)[0]
 
-        # --- 5. Obtener el resultado real del registro encontrado ---
-        # ¡CAMBIADO! Usamos las constantes importadas para seguridad y consistencia.
         real_h = match_record[HOME_TARGET].iloc[0]
         real_a = match_record[AWAY_TARGET].iloc[0]
 
         print(f"Predicción para {home_team} vs {away_team}: {pred_h:.2f} - {pred_a:.2f}")
         print(f"Resultado real: {real_h} - {real_a}")
 
-        # --- 6. Devolver la tupla completa ---
         return pred_h, pred_a, real_h, real_a
 

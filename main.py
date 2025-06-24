@@ -23,8 +23,6 @@ def cleanup():
     gc.collect()
 
 if __name__ == '__main__':
-    monitor = PerformanceMonitor(interval=30)  # Check every 30 seconds
-    monitor.start()
 
     api = Api()
     gui_dir = os.path.join('app', 'gui', 'templates')
@@ -45,7 +43,7 @@ if __name__ == '__main__':
     )
 
     # Register window close handler
-    window.events.closed += lambda: (monitor.stop(), cleanup())
+    window.events.closed += lambda: (cleanup())
 
     api.set_window(window)
 
