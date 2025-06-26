@@ -51,6 +51,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         processBtn.disabled = true;
         processBtn.textContent = 'Processing...';
+
+        const removeButtons = fileList.querySelectorAll('.btn-remove-file');
+        removeButtons.forEach(btn => btn.disabled = true);
         
         // KEY CHANGE: Use .then() for a non-blocking call.
         // This fires the Python function and immediately continues, avoiding the race condition.
