@@ -13,9 +13,6 @@ class Api:
         self.raw_data_output_path = os.path.join('data', 'raw')
         self._processed_data_cache = None
 
-    def set_window(self, window):
-        pass
-
     def load_default_datasets(self):
         try:
             if not os.path.isdir(self.default_data_path):
