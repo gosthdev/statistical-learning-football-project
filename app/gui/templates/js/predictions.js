@@ -84,11 +84,11 @@ function initializePredictions() {
                 homePredictionResult.textContent = result.predicted_home_goals.toFixed(2);
                 awayPredictionResult.textContent = result.predicted_away_goals.toFixed(2);
 
-                // Update actual results
-                homeActualResult.textContent = result.actual_home_goals;
-                awayActualResult.textContent = result.actual_away_goals;
+                // Update actual results (check if they exist)
+                homeActualResult.textContent = result.actual_home_goals !== undefined ? result.actual_home_goals : '-';
+                awayActualResult.textContent = result.actual_away_goals !== undefined ? result.actual_away_goals : '-';
                 
-                // NEW: Update comparison table
+                // Update comparison table
                 updatePredictionComparisonTable(result);
             }
         } catch (e) {
@@ -106,9 +106,10 @@ function initializePredictions() {
         const homeGoals = result.predicted_home_goals;
         const awayGoals = result.predicted_away_goals;
         
-        // Get actual values
+        // Get actual values (may be undefined)
         const actualHomeGoals = result.actual_home_goals;
         const actualAwayGoals = result.actual_away_goals;
+        const hasActualResults = actualHomeGoals !== undefined && actualAwayGoals !== undefined;
         
         // Calculate rounded values using the specified rule
         const roundedHomeGoals = Math.floor(homeGoals + 0.5);
@@ -134,16 +135,6 @@ function initializePredictions() {
             noroundResult = 'draw';
         }
         
-        // Determine actual match result
-        let actualResult = '';
-        if (actualHomeGoals > actualAwayGoals) {
-            actualResult = 'home win';
-        } else if (actualHomeGoals < actualAwayGoals) {
-            actualResult = 'away win';
-        } else {
-            actualResult = 'draw';
-        }
-        
         // Update rounded results row
         document.getElementById('rounded-home').textContent = roundedHomeGoals;
         document.getElementById('rounded-away').textContent = roundedAwayGoals;
@@ -161,12 +152,32 @@ function initializePredictions() {
         noroundResultCell.className = getResultClass(noroundResult);
         
         // Update actual results row
-        document.getElementById('actual-home').textContent = actualHomeGoals;
-        document.getElementById('actual-away').textContent = actualAwayGoals;
-        
-        const actualResultCell = document.getElementById('actual-result');
-        actualResultCell.textContent = actualResult;
-        actualResultCell.className = getResultClass(actualResult);
+        if (hasActualResults) {
+            // Determine actual match result
+            let actualResult = '';
+            if (actualHomeGoals > actualAwayGoals) {
+                actualResult = 'home win';
+            } else if (actualHomeGoals < actualAwayGoals) {
+                actualResult = 'away win';
+            } else {
+                actualResult = 'draw';
+            }
+            
+            document.getElementById('actual-home').textContent = actualHomeGoals;
+            document.getElementById('actual-away').textContent = actualAwayGoals;
+            
+            const actualResultCell = document.getElementById('actual-result');
+            actualResultCell.textContent = actualResult;
+            actualResultCell.className = getResultClass(actualResult);
+        } else {
+            // No actual results available
+            document.getElementById('actual-home').textContent = '-';
+            document.getElementById('actual-away').textContent = '-';
+            
+            const actualResultCell = document.getElementById('actual-result');
+            actualResultCell.textContent = '-';
+            actualResultCell.className = '';
+        }
         
         // Show the comparison table section
         document.getElementById('prediction-comparison-section').style.display = 'block';

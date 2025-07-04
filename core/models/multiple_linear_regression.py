@@ -5,7 +5,7 @@ import numpy as np
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import TimeSeriesSplit
 import joblib
-from ..config import FEATURES_COLUMNS, N_SPLITS, HOME_TARGET, AWAY_TARGET
+from ..config import FEATURES_COLUMNS, N_SPLITS, HOME_TARGET, AWAY_TARGET, HOME_FEATURES, AWAY_FEATURES
 from .base_model import BaseModel
 
 class MultipleLinearRegressionModel(BaseModel):
@@ -152,9 +152,62 @@ class MultipleLinearRegressionModel(BaseModel):
             ]
 
             if match_record.empty:
-                print(f"Error: No se encontró el partido {home_team} vs {away_team} en la fecha {date} en el dataset de prueba.")
-                return None, None, None, None
+                last_match_local = self.df_test[
+                    ((self.df_test['HomeTeam'] == home_team))
+                ].sort_values('Date', ascending=False)
 
+                print(f"Partidos encontrados para {home_team} como local: {len(last_match_local)}")
+
+                last_match_away = self.df_test[
+                    ((self.df_test['AwayTeam'] == away_team))
+                ].sort_values('Date', ascending=False)
+
+                print(f"Partidos encontrados para {away_team} como visitante: {len(last_match_away)}")
+
+                if last_match_local.empty or last_match_away.empty:
+                    print(f"No se encontraron partidos previos para {home_team} o {away_team}.")
+                    return None, None, None, None
+                    
+                last_match_local = last_match_local.iloc[0]
+                last_match_away = last_match_away.iloc[0]
+
+                input_local = last_match_local[HOME_FEATURES]
+                input_away = last_match_away[AWAY_FEATURES]
+
+                # Debug: Ver los valores antes de concatenar
+                print(f"Input local ({home_team} HOME_FEATURES): {input_local.values}")
+                print(f"Input away ({away_team} AWAY_FEATURES): {input_away.values}")
+                
+                # Crear el input_data en el orden correcto de FEATURES_COLUMNS
+                # FEATURES_COLUMNS = STREAK_COLUMNS + AVG_GOALS_COLUMNS + AVG_SHOTS_COLUMNS + AVG_CORNERS_COLUMNS + AVG_POINTS_COLUMNS + EFFICIENCY_COLUMNS
+                input_data_ordered = [
+                    input_local['H_WinStreak'], input_away['A_WinStreak'],  # STREAK_COLUMNS
+                    input_local['H_AvgGoals'], input_local['H_AvgGoalsAgainst'], input_away['A_AvgGoals'], input_away['A_AvgGoalsAgainst'],  # AVG_GOALS_COLUMNS
+                    input_local['H_AvgShots'], input_local['H_AvgShotsAgainst'], input_away['A_AvgShots'], input_away['A_AvgShotsAgainst'],  # AVG_SHOTS_COLUMNS
+                    input_local['H_AvgCorners'], input_local['H_AvgCornersAgainst'], input_away['A_AvgCorners'], input_away['A_AvgCornersAgainst'],  # AVG_CORNERS_COLUMNS
+                    input_local['H_Points'], input_away['A_Points'],  # AVG_POINTS_COLUMNS
+                    input_local['H_Eff_GoalsPerShot'], input_away['A_Eff_GoalsPerShot']  # EFFICIENCY_COLUMNS
+                ]
+                
+                input_data = pd.DataFrame([input_data_ordered], columns=FEATURES_COLUMNS)
+                
+                print(f"Input data shape: {input_data.shape}")
+                print("Input data con todas las columnas:")
+                for col in input_data.columns:
+                    print(f"  {col}: {input_data[col].iloc[0]}")
+                
+                # Verificar si hay valores NaN o None
+                if input_data.isnull().any().any():
+                    print("Warning: Input data contains NaN values")
+                    print(f"NaN columns: {input_data.columns[input_data.isnull().any()].tolist()}")
+                    return None, None, None, None
+                
+                pred_h = self.model_home.predict(input_data)[0]
+                pred_a = self.model_away.predict(input_data)[0]
+                
+                print(f"Predicción para {home_team} vs {away_team} (basada en datos historicos): {pred_h:.2f} : {pred_a:.2f}")
+                
+                return pred_h, pred_a, None, None
         except Exception as e:
             print(f"Error al buscar el partido en el dataset de prueba: {e}")
             return None, None, None, None
