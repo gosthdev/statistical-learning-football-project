@@ -5,12 +5,10 @@ from typing import Optional, Dict, Any
 import uvicorn
 from datetime import datetime
 
-# Importar los mismos módulos que usa pywebview
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Usar exactamente los mismos imports que la GUI
 import core.model_trainer
 import core.data_holder
 from core.models.multiple_linear_regression import MultipleLinearRegressionModel
@@ -76,7 +74,6 @@ async def health_check():
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_match(request: PredictionRequest):
-    # Usar exactamente la misma lógica que la GUI
     if not core.model_trainer.model_instance:
         raise HTTPException(
             status_code=503, 
@@ -94,7 +91,7 @@ async def predict_match(request: PredictionRequest):
         if pred_h is None or pred_a is None:
             raise HTTPException(
                 status_code=404,
-                detail=f"Could not generate prediction for {request.home_team} vs {request.away_team} on {request.date}"
+                detail=f"Could not generate prediction for {request.home_team} vs {request.away_team} on {request.date}. No history available for these teams."
             )
         
         response = PredictionResponse(
@@ -117,7 +114,7 @@ async def predict_match(request: PredictionRequest):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Prediction error: {str(e)}"
+            detail=f"Prediction_error: {str(e)}"
         )
 
 @app.get("/test-data")
